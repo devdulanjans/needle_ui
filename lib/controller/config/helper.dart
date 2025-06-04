@@ -1,0 +1,1 @@
+final $BASE_URL = "https://squid-app-6askb.ondigitalocean.app";
