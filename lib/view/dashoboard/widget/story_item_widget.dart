@@ -68,7 +68,7 @@ class StoryItem extends StatelessWidget {
             //       'https://randomuser.me/api/portraits/women/${45 + 1}.jpg'),
             // ),
           ),
-          SizedBox(height: 4),
+          SizedBox(height: 2), //change to 2 from 4 had some overflow
           Text('Username'),
         ],
       ),

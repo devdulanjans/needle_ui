@@ -11,10 +11,12 @@ Future<dynamic> API_V1_call({
   String? method,
   Map<String, dynamic>? body,
   bool isHeader = true,
+  int type = 0,
+  String oldAccessToken = ""// 0 for normal header, 1 for refresh header
 }) async {
 
   final setUrl = "${$baseUrl}${url}";
-  Map<String, String>? headers = await header(isHeader: isHeader);
+  Map<String, String>? headers = await header(isHeader: isHeader,oldAccessToken: oldAccessToken, type: type);
   var response;
 
   if (method == "POST") {
@@ -23,6 +25,11 @@ Future<dynamic> API_V1_call({
       body: jsonEncode(body),
       headers: headers,
     );
+
+//    print("CheckResponse:${setUrl}");
+ //   print("CheckResponseBody:${jsonEncode(body)}");
+//    print("CheckResponseHeaders:${headers}");
+
   } else if (method == "GET") {
     response = await http.get(Uri.parse(setUrl), headers: headers);
   }
@@ -96,12 +103,12 @@ void checkFilePath(String path) {
   }
 }
 
-Future<Map<String, String>?> header({bool isHeader = true}) async {
+Future<Map<String, String>?> header({bool isHeader = true,int type = 0,String oldAccessToken = ""}) async { //type 0 for normal header, type 1 for refresh header
   if (isHeader == true) {
     // SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? accessToken = await getAccessToken();
+    String? accessToken = type == 1 ? oldAccessToken : await getAccessToken();
     String? refreshToken = await getRefreshToken();
-    String? userId = await getUserId();
+    dynamic userId = await getUserId();
 
     print("userId: $userId");
 
@@ -118,7 +125,7 @@ Future<Map<String, String>?> header({bool isHeader = true}) async {
 Future<bool> refreshAccessToken({String? method, String? url}) async {
   final refreshToken = await getRefreshToken();
   final userId = await getUserId();
-  String? accessToken = await getAccessToken();
+  String? accessToken = await getAccessTokenOld(); //get the old access token for refresh
 
   print("refreshToken: $refreshToken");
   print("accessToken: $accessToken");
@@ -129,23 +136,29 @@ Future<bool> refreshAccessToken({String? method, String? url}) async {
   }
 
   var body = {
-    "userId":userId,
-    "refreshToken": refreshToken
+    "userId":int.tryParse(userId.toString()), //i got invalid input because this is a string
+    "refreshToken": refreshToken,
+    "accessToken":accessToken // add accessToken to the body as a new field
   };
 
   final response = await API_V1_call(
     method: method,
     url: url,
     body: body,
-    isHeader:true
+    isHeader:true,
+    type: 1,
+    oldAccessToken: accessToken ?? ""
   );
 
-  // print('REFRESH TOKEN CALL: ${response.statusCode}');
-  // print('REFRESH TOKEN CALL: ${response.body}');
+   print('REFRESH TOKEN CALL: ${response.statusCode}');
+   print('REFRESH TOKEN CALL: ${response.body}');
 
-  if (response.statusCode == 200) {
+  if (response.statusCode == 200 || response.statusCode == 201) {
     final data = json.decode(response.body);
-    // await saveTokens(data['access_token'], refreshToken!); // Use old refresh_token if new not sent
+    final String newAccessToken = data['data']['accessToken'];
+    final String apiRefreshToken = data['data']['refreshToken'] ?? ""; // Use old refresh_token if new not sent
+     var newRefreshToken = apiRefreshToken != "" ? apiRefreshToken : refreshToken ; // Use old refresh_token if new not sent
+     await saveTokens(accessToken: newAccessToken, refreshToken: newRefreshToken,rTokenExpDate: getExpiryTimeString()); // Use old refresh_token if new not sent
     return true;
   } else {
     return false;

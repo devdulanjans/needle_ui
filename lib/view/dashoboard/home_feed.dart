@@ -129,7 +129,7 @@ class _HomeFeedState extends State<HomeFeed> {
                 icon: Icon(Icons.search,
                     color: Theme.of(context).colorScheme.primary),
                 onPressed: () async {
-                  // Open search and reset after it's popped
+                 // Open search and reset after it's popped
                   await showSearch(
                     context: context,
                     delegate: DataSearch(search: _search),

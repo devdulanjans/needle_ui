@@ -198,7 +198,8 @@ class _LoginScreenState extends State<LoginScreen> {
           displayName: responseDecode['data']['displayName'].toString(),
           mobileNo: responseDecode['data']['mobileNo'].toString(),
           profilePicture: responseDecode['data']['profilePicture'].toString(),
-          coverImage: responseDecode['data']['coverImage'].toString()
+          coverImage: responseDecode['data']['coverImage'].toString(),
+          rTokenExpDate: getExpiryTimeString()
         );
 
         Navigator.pushNamed(context, '/main');
