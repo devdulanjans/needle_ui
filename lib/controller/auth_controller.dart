@@ -30,6 +30,21 @@ Future<void> saveTokens(
   await prefs.setString('refreshTokenExpireDate', rTokenExpDate ?? "");
 }
 
+
+
+Future<void> saveRefreshTokens(
+    {String? accessToken,
+      String? refreshToken,
+      String? rTokenExpDate
+    }) async {
+
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('accessToken', accessToken ?? "");
+  await prefs.setString('refreshToken', refreshToken ?? "");
+  await prefs.setString('refreshTokenExpireDate', rTokenExpDate ?? "");
+}
+
+
 Future<String?> getAccessTokenOld() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('accessToken');

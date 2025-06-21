@@ -158,7 +158,7 @@ Future<bool> refreshAccessToken({String? method, String? url}) async {
     final String newAccessToken = data['data']['accessToken'];
     final String apiRefreshToken = data['data']['refreshToken'] ?? ""; // Use old refresh_token if new not sent
      var newRefreshToken = apiRefreshToken != "" ? apiRefreshToken : refreshToken ; // Use old refresh_token if new not sent
-     await saveTokens(accessToken: newAccessToken, refreshToken: newRefreshToken,rTokenExpDate: getExpiryTimeString()); // Use old refresh_token if new not sent
+     await saveRefreshTokens(accessToken: newAccessToken, refreshToken: newRefreshToken,rTokenExpDate: getExpiryTimeString()); // Use old refresh_token if new not sent
     return true;
   } else {
     return false;
