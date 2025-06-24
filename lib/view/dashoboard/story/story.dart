@@ -1,28 +1,10 @@
-// import 'package:flutter/material.dart';
-//
-// import 'widget/story_item_widget.dart';
-//
-// class StoriesList extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return SizedBox(
-//       height: 250,
-//       child: ListView.builder(
-//         scrollDirection: Axis.horizontal,
-//         itemCount: 10,
-//         itemBuilder: (context, index) => StoryItem(imageUrl: "https://randomuser.me/api/portraits/women/${45 + 1}.jpg"),
-//       ),
-//     );
-//   }
-// }
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../controller/api/api_controller.dart';
-import 'widget/empty_story_widget.dart';
-import 'widget/story_item_widget.dart';
+import '../../../controller/api/api_controller.dart';
+import '../widget/empty_story_widget.dart';
+import '../widget/story_item_widget.dart';
 
 class StoriesList extends StatefulWidget {
   @override
@@ -56,12 +38,13 @@ class _StoriesListState extends State<StoriesList> {
   }
 
   Future<void> _fetchStories() async {
+
     final newStory = {
       "id": "0",
       "userId": "",
       "contentMediaType": "",
       "contentMediaUrl": "",
-      "contentText": "Car Race",
+      "contentText": "Dulanjan Silva",
       "createdAt": "2025-04-07T06:07:38.208623Z",
       "viewCount": 0,
       "displayName": "Parasuram",

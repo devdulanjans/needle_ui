@@ -19,7 +19,7 @@ Future<dynamic> API_V1_call({
   Map<String, String>? headers = await header(isHeader: isHeader,oldAccessToken: oldAccessToken, type: type);
   var response;
 
-  if (method == "POST") {
+  if (method == "POST" || method == "PUT") {
     response = await http.post(
       Uri.parse(setUrl),
       body: jsonEncode(body),

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import 'package:needle2/view/dashoboard/profile/user_profile_details.dart';
 
 import '../../../controller/api/api_controller.dart';
 import '../../../controller/auth_controller.dart';
+import '../../../controller/config/image_path_setter.dart';
 import '../../../model/logged_user_profile_model.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -26,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? userName = "";
   File? _selectedImage;
   File? _selectedProfileImage;
+  String loggedUserId = "";
 
   Future<void> _handleAddFriend() async {
     setState(() {
@@ -83,6 +84,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // TODO: implement initState
     super.initState();
     callLocalData();
+    profileData();
+    print("widget.userProfile: ${widget.userProfile}");
   }
 
   Future<void> callLocalData() async {
@@ -118,36 +121,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> profileData()async{
+    loggedUserId = (await getUserId())!;
+    var _imageUrl = await getUserProfilePicture();
+  }
+
   @override
   Widget build(BuildContext context) {
 
+    ImageProvider<Object>? _profileImage = widget.userProfile?.profilePicture != null
+        ? CachedNetworkImageProvider(
+      imagePathSetter(
+        imageName: widget.userProfile?.profilePicture,
+        imageSize: "MEDIUM",
+        requestingImageType: "POST",
+        setUserId: widget.userProfile?.id.toString(),
+      ),
+    )
+        : AssetImage('assets/profile_images.png');
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // SliverAppBar(
-          //   expandedHeight: 200,
-          //   flexibleSpace: FlexibleSpaceBar(
-          //     background: widget.userProfile?.profilePicture != null
-          //         ? Image.asset(
-          //       "assets/default_cover.png",
-          //       fit: BoxFit.cover,
-          //     )
-          //         : CachedNetworkImage(
-          //       imageUrl: 'https://picsum.photos/800/600',
-          //       fit: BoxFit.cover,
-          //     ),
-          //   ),
-          // ),
           SliverAppBar(
             expandedHeight: 200,
-            flexibleSpace: _selectedImage != null
-                ? Image.file(
-              _selectedImage!,
-              fit: BoxFit.cover,
-            )
-                : CachedNetworkImage(
-              imageUrl: 'https://picsum.photos/800/600',
-              fit: BoxFit.cover,
+            flexibleSpace: FlexibleSpaceBar(
+              background: (widget.userProfile?.coverImage != null && widget.userProfile?.coverImage != null)
+                  ? Image(
+                  image: CachedNetworkImageProvider(
+                    imagePathSetter(
+                      imageName: widget.userProfile?.coverImage,
+                      imageSize: "THUMBNAIL",
+                      requestingImageType: "COVER",
+                      setUserId: widget.userProfile?.id.toString(),
+                    ),
+                  ),
+                  fit: BoxFit.cover,
+                )
+                  : Image.asset(
+                "assets/profile_images.png",
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           SliverList(
@@ -198,7 +211,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(
+                        loggedUserId == widget.userProfile!.id.toString() ?
+                          Expanded(
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : _handleAddFriend,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isFriend ? Colors.red : Colors.purple,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: isLoading
+                                ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : Text(
+                              isFriend ? 'Unfriend' : 'Add As Friend',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        )
+                          :Expanded(
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _handleAddFriend,
                             style: ElevatedButton.styleFrom(

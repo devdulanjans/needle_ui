@@ -9,8 +9,7 @@ import '../../model/logged_user_profile_model.dart';
 import 'post/create_post_2.dart';
 import 'post_card.dart';
 import 'profile/profile.dart';
-import 'profile/user_profile.dart';
-import 'story.dart';
+import 'story/story.dart';
 
 class HomeFeed extends StatefulWidget {
   @override
@@ -277,13 +276,14 @@ class DataSearch extends SearchDelegate<String> {
       itemBuilder: (context, index) {
         return GestureDetector(
           onTap: (){
-            // Navigator.of(context).push(
-            //   MaterialPageRoute(
-            //     builder: (context) => ProfileScreen(
-            //         userProfile: _results[index]
-            //     ),
-            //   ),
-            // );
+            print("Tapped on user: ${_results[index]}");
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ProfileScreen(
+                  userProfile: _results[index],
+                ),
+              ),
+            );
           },
           child: ListTile(
             leading: CircleAvatar(

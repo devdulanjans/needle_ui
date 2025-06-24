@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:needle2/model/friend_request_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../../controller/api/api_controller.dart';
 import '../../../controller/config/image_path_setter.dart';
 import '../../../controller/friend_api.dart';
 
@@ -40,6 +43,36 @@ class _FriendsPageState extends State<FriendsPage> {
       setState(() {
         friendRequest = [];
       });
+    }
+  }
+
+  Future<void> friendRequestApprove(String id) async{
+
+    var responseData = await API_V1_call(
+      url: "/api/friend-request/status/${id}?status=ACCEPTED",
+      method: "PUT",
+    );
+
+    print('asd - Response: ${responseData.statusCode}');
+    print('asd - Response: ${responseData.body}');
+
+    if (responseData.statusCode == 200) {
+      final data = jsonDecode(responseData.body)['data'] == null
+          ? []
+          : jsonDecode(responseData.body)['data'];
+      print(responseData);
+      setState(() {
+        // _stories.addAll(data);
+        // _isLoading = false;
+      });
+    } else {
+      // Handle error
+      setState(() {
+        // _isLoading = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error fetching stories')));
     }
   }
 
@@ -111,6 +144,7 @@ class _FriendsPageState extends State<FriendsPage> {
                       child: ElevatedButton(
                         onPressed: () {
                           // Handle confirm action
+                          friendRequestApprove(request.id.toString());
                         },
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(
