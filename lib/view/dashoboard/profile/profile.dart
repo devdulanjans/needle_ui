@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,11 +10,16 @@ import '../../../controller/api/api_controller.dart';
 import '../../../controller/auth_controller.dart';
 import '../../../controller/config/image_path_setter.dart';
 import '../../../model/logged_user_profile_model.dart';
+import '../widget/common_seperator.dart';
+import 'profile_details/user_post_tab/about_us_section.dart';
+import 'profile_details/user_post_tab/user_photos.dart';
+import 'profile_details/user_post_tab/view_post_section.dart';
 
 class ProfileScreen extends StatefulWidget {
   final LoggedUserProfile? userProfile;
+  final String? userId;
 
-  ProfileScreen({this.userProfile});
+  ProfileScreen({this.userProfile, this.userId});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -24,9 +30,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isFriend = false;
   String? userId = "";
   String? userName = "";
+  File? _selectedCoverImage;
   File? _selectedImage;
-  File? _selectedProfileImage;
   String loggedUserId = "";
+  LoggedUserProfile? fetchedUserData;
+  List <dynamic> _pageTab = ['Post', 'About', 'Videos', 'Photos'];
+  int selectedIndex = 0;
 
   Future<void> _handleAddFriend() async {
     setState(() {
@@ -35,11 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     String? userId = await getUserId();
 
-    print('userId $userId');
-    return;
-
     try {
-      // Simulate API call
       Map<String, dynamic>? body = {
         "senderUserId": userId,
         "receiverUserId": widget.userProfile?.id,
@@ -49,18 +54,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         url: "/api/friend-request",
         method: "POST",
         body: body,
-        isHeader: true
+        isHeader: true,
       );
 
-      print("body: $body");
-      print("response.statusCode: ${response.statusCode}");
-      print("RESPONSE DATA: ${response.body}");
-
       if (response.statusCode == 200) {
-        print("RESPONSE DATA: ${response.body}");
-        // final data = (jsonDecode(response.body)['data'] as List<dynamic>)
-        //     .cast<Map<String, dynamic>>();
-        // Update friendship state
         setState(() {
           isFriend = !isFriend;
         });
@@ -69,7 +66,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SnackBar(content: Text('Error fetching search results')),
         );
       }
-
     } catch (e) {
       print("Error calling API: $e");
     } finally {
@@ -79,26 +75,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    callLocalData();
-    profileData();
-    print("widget.userProfile: ${widget.userProfile}");
-  }
-
   Future<void> callLocalData() async {
-    var _userId = await getUserId();
-    var _userName = await getUserName();
+    var _userIdVal = await getUserId();
+    var _userNameVal = await getUserName();
     setState(() {
-      userName = _userName;
-      _userId = _userId;
+      userName = _userNameVal;
+      userId = _userIdVal;
     });
-    print('userId $userId');
-    return;
   }
 
+  Future<void> _pickCoverImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedCoverImage = File(pickedFile.path);
+        // Here you would typically upload the image to your server
+        // and update the user's cover image URL in your database.
+      });
+    }
+  }
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -116,50 +113,173 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (pickedFile != null) {
       setState(() {
-        _selectedProfileImage = File(pickedFile.path);
+        _selectedImage = File(pickedFile.path);
       });
     }
   }
 
-  Future<void> profileData()async{
+  Future<void> profileData() async {
     loggedUserId = (await getUserId())!;
-    var _imageUrl = await getUserProfilePicture();
+    await getUserProfilePicture();
+  }
+
+  Future<void> _fetchUserDetails() async {
+    await getUserName();
+    await getUserId();
+    await getUserProfilePicture();
+
+    setState(() {
+      isLoading = true;
+    });
+
+    var responseData = await API_V1_call(
+      url: "/api/user/details/${widget.userId}",
+      method: "GET",
+    );
+
+    if (responseData.statusCode == 200) {
+      final data = jsonDecode(responseData.body)['data'] ?? {};
+      setState(() {
+        fetchedUserData = LoggedUserProfile.fromJson(data);
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching stories')),
+      );
+    }
+  }
+
+  Widget loggedUserData() {
+    return Row(
+      children: [
+        ElevatedButton(
+          onPressed: (){},
+          // onPressed: isLoading ? null : _handleAddFriend,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isFriend ? Colors.red : Colors.purple,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: isLoading
+              ? SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          )
+              : Row(
+            children: [
+              Icon(Icons.dashboard, color: Colors.white),
+              SizedBox(width: 4),
+              Text('Professional dashboard', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+        SizedBox(width: 4),
+        ElevatedButton(
+          onPressed: (){},
+          // onPressed: isLoading ? null : _handleAddFriend,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isFriend ? Colors.red : Colors.purple,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: isLoading
+              ? SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          )
+              : Row(
+            children: [
+              Icon(Icons.post_add, color: Colors.white),
+              SizedBox(width: 4),
+              Text('Create Post', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectedTabView() {
+    switch (selectedIndex) {
+      case 0:
+        return Padding(padding: EdgeInsets.all(16), child: ViewPostDetails(userName: fetchedUserData?.displayName,userId: fetchedUserData?.id,));
+      case 1:
+        return Padding(padding: EdgeInsets.all(16), child: UserAboutDetails(userName: fetchedUserData?.displayName,userId: fetchedUserData?.id,));
+      case 2:
+        return Padding(padding: EdgeInsets.all(16), child: Center(child: Text('Videos are not Showing yet', style: TextStyle(color: Colors.black),)));
+      case 3:
+        return Padding(padding: EdgeInsets.all(16), child: UserPhotos(userDisplayName: fetchedUserData?.displayName, userId: fetchedUserData?.id,));
+      case 4:
+        return Padding(padding: EdgeInsets.all(16), child: Text('Event Section', style: TextStyle(color: Colors.black),));
+      default:
+        return SizedBox();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    callLocalData();
+    profileData();
+    _fetchUserDetails();
   }
 
   @override
   Widget build(BuildContext context) {
-
-    ImageProvider<Object>? _profileImage = widget.userProfile?.profilePicture != null
-        ? CachedNetworkImageProvider(
-      imagePathSetter(
-        imageName: widget.userProfile?.profilePicture,
-        imageSize: "MEDIUM",
-        requestingImageType: "POST",
-        setUserId: widget.userProfile?.id.toString(),
-      ),
-    )
-        : AssetImage('assets/profile_images.png');
     return Scaffold(
-      body: CustomScrollView(
+      body: fetchedUserData == null
+          ? Center(child: CircularProgressIndicator())
+          : CustomScrollView(
         slivers: [
           SliverAppBar(
+            pinned: true,
             expandedHeight: 200,
             flexibleSpace: FlexibleSpaceBar(
-              background: (widget.userProfile?.coverImage != null && widget.userProfile?.coverImage != null)
-                  ? Image(
-                  image: CachedNetworkImageProvider(
-                    imagePathSetter(
-                      imageName: widget.userProfile?.coverImage,
-                      imageSize: "THUMBNAIL",
-                      requestingImageType: "COVER",
-                      setUserId: widget.userProfile?.id.toString(),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _selectedCoverImage != null
+                      ? Image.file(
+                    _selectedCoverImage!,
+                    fit: BoxFit.cover,
+                  )
+                      : (fetchedUserData?.coverImage?.isNotEmpty ?? false)
+                      ? Image(
+                    image: CachedNetworkImageProvider(
+                      imagePathSetter(
+                        imageName: fetchedUserData?.coverImage,
+                        imageSize: "THUMBNAIL",
+                        requestingImageType: "COVER",
+                        setUserId: fetchedUserData?.id.toString(),
+                      ),
+                    ),
+                    fit: BoxFit.cover,
+                  )
+                      : Image.asset("assets/default_cover.png", fit: BoxFit.cover),
+                  if (loggedUserId == fetchedUserData!.id.toString())
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: IconButton(
+                      icon: Icon(Icons.camera_alt, color: Colors.white),
+                      onPressed: _pickCoverImage,
                     ),
                   ),
-                  fit: BoxFit.cover,
-                )
-                  : Image.asset(
-                "assets/profile_images.png",
-                fit: BoxFit.cover,
+                ],
               ),
             ),
           ),
@@ -171,32 +291,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundImage: _selectedProfileImage != null
-                              ? FileImage(_selectedProfileImage!)
-                              : CachedNetworkImageProvider('https://randomuser.me/api/portraits/men/75.jpg') as ImageProvider,
-                        ),
-                        Spacer(),
-                        Column(
+                        Stack(
+                          alignment: Alignment.bottomRight,
                           children: [
-                            Text('1,234', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                            Text('Posts'),
-                          ],
-                        ),
-                        SizedBox(width: 20),
-                        Column(
-                          children: [
-                            Text('12.3K', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text('Followers'),
-                          ],
-                        ),
-                        SizedBox(width: 20),
-                        Column(
-                          children: [
-                            Text('456', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text('Following'),
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundImage: _selectedImage != null
+                                  ? FileImage(_selectedImage!)
+                                  : (fetchedUserData?.profilePicture?.isNotEmpty ?? false)
+                                      ? CachedNetworkImageProvider(
+                                          imagePathSetter(
+                                            imageName: fetchedUserData?.profilePicture,
+                                            imageSize: "THUMBNAIL",
+                                            requestingImageType: "PROFILE",
+                                            setUserId: fetchedUserData?.id.toString(),
+                                          ),
+                                        )
+                                  : AssetImage("assets/profile_images.png") as ImageProvider,
+                            ),
+                            if (loggedUserId == fetchedUserData!.id.toString())
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: GestureDetector(
+                                  onTap: _pickProfileImage,
+                                  child: CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: Colors.grey.shade300,
+                                    child: Icon(Icons.camera_alt, color: Colors.black, size: 20),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         Spacer(),
@@ -204,94 +331,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      userName!,
+                      fetchedUserData!.displayName,
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20),
                     ),
-                    Text(widget.userProfile?.bio?.toString() ?? 'Unknown User', style: TextStyle(color: Colors.black)),
+                    fetchedUserData?.bio?.isNotEmpty ?? false
+                        ? Text(fetchedUserData?.bio ?? '', style: TextStyle(color: Colors.black))
+                        : SizedBox.shrink(),
                     SizedBox(height: 16),
                     Row(
                       children: [
-                        loggedUserId == widget.userProfile!.id.toString() ?
-                          Expanded(
+                        loggedUserId == fetchedUserData!.id.toString()
+                            ? loggedUserData()
+                            : Expanded(
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _handleAddFriend,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: isFriend ? Colors.red : Colors.purple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             child: isLoading
                                 ? SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
                                 : Text(
                               isFriend ? 'Unfriend' : 'Add As Friend',
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
-                        )
-                          :Expanded(
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _handleAddFriend,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isFriend ? Colors.red : Colors.purple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: isLoading
-                                ? SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    isFriend ? 'Unfriend' : 'Add As Friend',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                          ),
                         ),
                         SizedBox(width: 8),
-                        ElevatedButton(
+                        loggedUserId == fetchedUserData!.id.toString()
+                            ? SizedBox.shrink()
+                            : ElevatedButton(
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => UserListPage(
-                                    userDisplayName: widget.userProfile?.displayName?.toString() ?? 'Unknown User',
+                                  userDisplayName: fetchedUserData?.displayName ?? 'Unknown User',
                                 ),
                               ),
                             );
                           },
-                          child: Icon(Icons.menu,color: Colors.black,),
+                          child: Icon(Icons.menu, color: Colors.black),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 2,
-                  mainAxisSpacing: 2,
-                ),
-                itemCount: 15,
-                itemBuilder: (context, index) => CachedNetworkImage(
-                  imageUrl: 'https://picsum.photos/300/300?random=$index',
-                  fit: BoxFit.cover,
+              Separator(),
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: 55,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _pageTab.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedIndex = index;
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(10.0),
+                          margin: EdgeInsets.only(left: 5.0),
+                          decoration: BoxDecoration(
+                            color: selectedIndex == index ? Colors.purple.shade50 : Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _pageTab[index],
+                              style: TextStyle(color:  selectedIndex == index ? Colors.purpleAccent:Colors.black,fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
+              _buildSelectedTabView(),
             ]),
           ),
         ],

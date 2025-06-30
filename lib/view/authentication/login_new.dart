@@ -6,6 +6,8 @@ import 'package:needle2/controller/auth_controller.dart';
 import '../../controller/api/api_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'forgot_password.dart';
+
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -118,7 +120,14 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ):CircularProgressIndicator(),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              // _resetPassword();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ForgotPassword(),
+                ),
+              );
+            },
             child: Text('Forgot Password?', style: TextStyle(color: Colors.white70)),
           ),
           SizedBox(height: 20),
@@ -138,6 +147,47 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     );
+  }
+
+  Future _resetPassword() async {
+    String? email;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Send'),
+            ),
+          ],
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Enter your email', style: TextStyle(color: Colors.black),),
+              const SizedBox(height: 20),
+              TextFormField(
+                onChanged: (value) {
+                  email = value;
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (email != null) {
+      // try {
+      //   await auth.sendPasswordResetEmail(email: email!);
+      //   ScaffoldSnackbar.of(context).show('Password reset email is sent');
+      // } catch (e) {
+      //   ScaffoldSnackbar.of(context).show('Error resetting');
+      // }
+    }
   }
 
   // Future<void> loginAction(BuildContext context) async {

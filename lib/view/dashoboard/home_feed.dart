@@ -96,7 +96,16 @@ class _HomeFeedState extends State<HomeFeed> {
     );
 
     if (responseData.statusCode == 200) {
-      final data = (jsonDecode(responseData.body)['data']['posts'] as List).reversed.toList();
+      var data = [];
+
+      final posts = jsonDecode(responseData.body)['data']['posts'];
+      if (posts != null) {
+        data = (posts as List).reversed.toList();
+        // Proceed with `data`
+      } else {
+        print('Posts data is null');
+      }
+
       setState(() {
         _allPostData = data;
       });
@@ -280,7 +289,7 @@ class DataSearch extends SearchDelegate<String> {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => ProfileScreen(
-                  userProfile: _results[index],
+                  userId: _results[index]?.id.toString(),
                 ),
               ),
             );

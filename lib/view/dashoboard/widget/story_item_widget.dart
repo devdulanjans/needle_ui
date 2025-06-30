@@ -50,6 +50,7 @@ class _StoryItemState extends State<StoryItem> {
   }
   // Dart
   Widget build(BuildContext context) {
+    print(widget.stories);
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -61,14 +62,15 @@ class _StoryItemState extends State<StoryItem> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
-                image: CachedNetworkImageProvider(
-                  widget.stories['contentMediaUrl'] != null &&
-                          widget.stories['contentMediaUrl'].isNotEmpty
-                      ? widget.stories['contentMediaUrl']
-                      : _profileImage.isNotEmpty
-                          ? _profileImage
-                          : "https://via.placeholder.com/150", // Fallback image URL
-                ),
+                image: widget.stories['contentMediaUrl'] != null && widget.stories['contentMediaUrl'].isNotEmpty
+                    ? CachedNetworkImageProvider(
+                  imagePathSetter(
+                    imageName: widget.stories['contentMediaUrl'],
+                    imageSize: "THUMBNAIL",
+                    requestingImageType: "STORY",
+                    setUserId: 8.toString(),
+                  ),
+                ):AssetImage("assets/profile_images.png"),
                 fit: BoxFit.cover,
               ),
             ),

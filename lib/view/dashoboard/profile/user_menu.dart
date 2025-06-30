@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../controller/auth_controller.dart';
 import '../../../controller/config/image_path_setter.dart';
+import '../../settings/settings_and_privacy.dart';
 
 class UserMenu extends StatefulWidget {
   const UserMenu({super.key});
@@ -61,8 +62,16 @@ class _UserMenuState extends State<UserMenu> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Menu", style: TextStyle(fontWeight: FontWeight.bold,color: Colors.black)),
-        actions: const [
-          Icon(Icons.settings,color: Colors.black),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings, color: Colors.black),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPrivacyPage()),
+              );
+            },
+          ),
           SizedBox(width: 16),
           Icon(Icons.search,color: Colors.black),
           SizedBox(width: 16),

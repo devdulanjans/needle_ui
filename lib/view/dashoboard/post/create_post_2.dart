@@ -255,8 +255,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
       'creatorId':userId
     };
 
-    print("bodyData: $bodyData");
-
     var responseData = await API_V1_Multipart_call(
       method: "POST",
       url: "/api/post",

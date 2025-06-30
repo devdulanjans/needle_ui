@@ -173,7 +173,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
           _buildAttachmentButton(
             icon: Icons.photo_library,
             label: 'Photo/Video',
-            onPressed: _pickImages,
+            onPressed: _selectedImages.isEmpty ? () => _pickImages() : (){}, // Disable if an image is already selected
           ),
         ],
       ),
@@ -202,16 +202,10 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
   }
 
   Future<void> _pickImages() async {
-    final List<XFile>? images = await _picker.pickMultiImage();
-    if (images != null) {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
       setState(() {
-        _selectedImages.addAll(images);
-        if (_selectedImages.length > 10) {
-          _selectedImages = _selectedImages.sublist(0, 10);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Maximum 10 images allowed')));
-        }
+        _selectedImages = [image]; // Replace the list with the single selected image
       });
     }
   }
@@ -232,6 +226,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
       isLoading = true;
     });
     List<String> imagePaths = _selectedImages.map((file) => file.path).toList();
+    var getImagePaths = _selectedImages;
 
     List<String> imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
     List<String> videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'flv', 'wmv'];
@@ -250,17 +245,19 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
     String? userId = await getUserId();
 
     var bodyData = {
-      'content': _postController.text,
+      'contentText': _postController.text,
+      "contentMediaType":mediaType,
       'visibility': _selectedValue,
       'creatorId':userId
     };
 
     print("bodyData: $bodyData");
+    print("mediaType: $mediaType");
 
     var responseData = await API_V1_Multipart_call(
         method: "POST",
         url: "/api/story",
-        filePaths: imagePaths,
+        filePaths: _selectedImages.map((file) => file.path).toList(),
         body: bodyData,
         isHeader: true,
         mediaTypes: mediaType

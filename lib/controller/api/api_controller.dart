@@ -26,10 +26,6 @@ Future<dynamic> API_V1_call({
       headers: headers,
     );
 
-//    print("CheckResponse:${setUrl}");
- //   print("CheckResponseBody:${jsonEncode(body)}");
-//    print("CheckResponseHeaders:${headers}");
-
   } else if (method == "GET") {
     response = await http.get(Uri.parse(setUrl), headers: headers);
   }
@@ -110,7 +106,8 @@ Future<Map<String, String>?> header({bool isHeader = true,int type = 0,String ol
     String? refreshToken = await getRefreshToken();
     dynamic userId = await getUserId();
 
-    print("userId: $userId");
+    // print("userId: $userId");
+    // print("accessToken: "+accessToken!);
 
     return {
       'Content-Type': 'application/json',

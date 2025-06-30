@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
       home: FutureBuilder<bool>(
         future: _autoLoginFuture,
         builder: (context, snapshot) {
-          print("CheckSnapshot: ${snapshot.data}");
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return SplashScreen(); // Show loading while checking
           } else if (snapshot.hasData) {

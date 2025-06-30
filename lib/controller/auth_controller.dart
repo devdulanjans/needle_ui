@@ -50,8 +50,19 @@ Future<String?> getAccessTokenOld() async {
   return prefs.getString('accessToken');
 }
 
-
-
+Future<void> logeOut() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove('accessToken');
+  await prefs.remove('refreshToken');
+  await prefs.remove('userId');
+  await prefs.remove('displayName');
+  await prefs.remove('email');
+  await prefs.remove('bio');
+  await prefs.remove('profilePicture');
+  await prefs.remove('coverImage');
+  await prefs.remove('mobileNo');
+  await prefs.remove('refreshTokenExpireDate');
+}
 
 Future<String?> getAccessToken() async {
   final prefs = await SharedPreferences.getInstance();
