@@ -16,7 +16,6 @@ class PostCard extends StatefulWidget {
 
   PostCard(this.wallPost);
 
-
   @override
   _PostCardState createState() => _PostCardState();
 }
@@ -46,15 +45,14 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _likePost() async {
-
     reactionType = reactionType.isEmpty ? "LIKE" : reactionType;
 
     print("reactionType: $reactionType");
 
     var _bodyData = {
-      "type":"COMMENT",
-      "itemId":widget.wallPost['wallId'],
-      "reaction":"LIKE"
+      "type": "COMMENT",
+      "itemId": widget.wallPost['wallId'],
+      "reaction": "LIKE",
     };
 
     final response = await API_V1_call(
@@ -72,17 +70,16 @@ class _PostCardState extends State<PostCard> {
         likeCount += isLiked ? 1 : -1;
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error liking the post')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error liking the post')));
     }
   }
 
-  void _getLikesOfPost()async{
-
+  void _getLikesOfPost() async {
     var _bodyData = {
-        "itemType":"COMMENT",
-        "itemId":widget.wallPost['wallId']
+      "itemType": "COMMENT",
+      "itemId": widget.wallPost['wallId'],
     };
 
     final response = await API_V1_call(
@@ -92,7 +89,6 @@ class _PostCardState extends State<PostCard> {
     );
 
     if (response.statusCode == 200) {
-
       var data = [];
 
       final posts = jsonDecode(response.body)['data'];
@@ -111,20 +107,15 @@ class _PostCardState extends State<PostCard> {
           postLikes = data;
         });
       }
-
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error liking the post')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error liking the post')));
     }
-
   }
 
   void _commentPost() async {
-
-    var _bodyData = {
-      "content":_commentController.text.toString()
-    };
+    var _bodyData = {"content": _commentController.text.toString()};
 
     final response = await API_V1_call(
       url: "/api/post/${widget.wallPost['wallId']}/comment",
@@ -133,7 +124,6 @@ class _PostCardState extends State<PostCard> {
     );
 
     if (response.statusCode == 200) {
-
       var data = [];
 
       final posts = jsonDecode(response.body)['data'];
@@ -153,16 +143,14 @@ class _PostCardState extends State<PostCard> {
       // ScaffoldMessenger.of(context).showSnackBar(
       //   SnackBar(backgroundColor: Colors.red, content: Text('Error liking the post',style: TextStyle(color: Colors.white))),
       // );
-
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error liking the post')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error liking the post')));
     }
   }
 
-  void _getComments(String postId) async{
-
+  void _getComments(String postId) async {
     final response = await API_V1_call(
       url: "/api/post/comment/${postId}",
       method: "GET",
@@ -182,11 +170,16 @@ class _PostCardState extends State<PostCard> {
       // );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: Colors.red, content: Text('Error Comment ',style: TextStyle(color: Colors.white))),
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(
+            'Error Comment ',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
       );
       print("Response Data ${jsonDecode(response.body)['data']}");
     }
-
   }
 
   void _showReactionsPopup(BuildContext context) {
@@ -245,13 +238,12 @@ class _PostCardState extends State<PostCard> {
   }
 
   void callProfileScreen() {
-
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ProfileScreen(
-          // userProfile: userProfile,
-          userId: widget.wallPost['userId'].toString(),
-        ),
+        builder:
+            (context) => ProfileScreen(
+              userId: widget.wallPost['userId'].toString(),
+            ),
       ),
     );
   }
@@ -261,82 +253,165 @@ class _PostCardState extends State<PostCard> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return SingleChildScrollView(
-          // height: 400, // Set the desired height here
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: 40,
-              left: 16.0,
-              right: 16.0,
-              top: 16.0,
-            ),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 300, // Adjusted height for the comment list
-                  child: comments.isEmpty
-                      ? Center(child: Text('No comments yet.', style: TextStyle(color: Colors.black),))
-                      : ListView.builder(
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      final comment = comments[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: comment['userProfileImage'] != null
-                              ? CachedNetworkImageProvider(
-                            imagePathSetter(
-                              imageName: comment['userProfileImage'],
-                              imageSize: "MEDIUM",
-                              requestingImageType: "PROFILE",
-                              setUserId: comment['userId'].toString(),
+        // Add background color here
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 16.0,
+                bottom: 50,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 300,
+                    child:
+                        comments.isEmpty
+                            ? Center(
+                              child: Text(
+                                'No comments yet.',
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            )
+                            : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: comments.length,
+                              itemBuilder: (context, index) {
+                                final comment = comments[index];
+                                final DateTime commentDate = DateTime.parse(
+                                  comment['createdAt'],
+                                );
+                                final String commentFormattedDate = timeago
+                                    .format(commentDate);
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.purpleAccent.withAlpha(30),
+                                    // Background color
+                                    borderRadius: BorderRadius.circular(
+                                      12,
+                                    ), // Curved corners
+                                  ),
+                                  margin: EdgeInsets.symmetric(vertical: 4),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundImage:
+                                          comment['userProfileImage'] != null
+                                              ? CachedNetworkImageProvider(
+                                                imagePathSetter(
+                                                  imageName:
+                                                      comment['userProfileImage'],
+                                                  imageSize: "MEDIUM",
+                                                  requestingImageType:
+                                                      "PROFILE",
+                                                  setUserId:
+                                                      comment['userId']
+                                                          .toString(),
+                                                ),
+                                              )
+                                              : AssetImage(
+                                                    'assets/profile_images.png',
+                                                  )
+                                                  as ImageProvider,
+                                    ),
+                                    title: Text(
+                                      comment['userName'] ?? 'Unknown User',
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                    subtitle: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          comment['content'] ?? '',
+                                          style: GoogleFonts.poppins(color: Colors.black,fontSize: 16),
+                                        ),
+                                        Row(
+                                          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              commentFormattedDate,
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Icon(
+                                              Icons.thumb_up,
+                                              color: Colors.black,
+                                              size: 13,
+                                            ),
+                                            SizedBox(width: 10),
+                                            GestureDetector(
+                                              onTap: () {
+                                                // Handle reply action
+                                                print("Reply to comment");
+                                                // You can implement reply functionality here
+                                              },
+                                              child: Text(
+                                                "Reply",
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          )
-                              : AssetImage('assets/profile_images.png') as ImageProvider,
-                        ),
-                        title: Text(comment['userName'] ?? 'Unknown User',style: TextStyle(color: Colors.black)),
-                        subtitle: Text(comment['content'] ?? '', style: TextStyle(color: Colors.black)),
-                      );
-                    },
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width - 100 - 32, // Adjusted for padding
-                        height: 50,
-                        child: TextField(
-                          style: TextStyle(color: Colors.black),
-                          controller: _commentController,
-                          decoration: InputDecoration(
-                            hintStyle: TextStyle(color: Colors.black54),
-                            hintText: 'Add a comment...',
-                            fillColor: Colors.black12,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide.none,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _commentController,
+                            style: TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                              hintText: 'Add a comment...',
+                              hintStyle: TextStyle(color: Colors.black54),
+                              filled: true,
+                              fillColor: Colors.black12,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 14.0,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide.none,
+                              ),
                             ),
                           ),
-                          autofocus: true,
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          if (_commentController.text.isNotEmpty) {
-                            _commentPost();
-                            _commentController.clear();
-                            _getComments(widget.wallPost['wallId'].toString()); // Refresh comments
-                          }
-                        },
-                        icon: Icon(Icons.send, color: Colors.purpleAccent),
-                      ),
-                    ],
+                        IconButton(
+                          icon: Icon(Icons.send, color: Colors.purpleAccent),
+                          onPressed: () {
+                            if (_commentController.text.isNotEmpty) {
+                              _commentPost();
+                              _commentController.clear();
+                              _getComments(
+                                widget.wallPost['wallId'].toString(),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -362,30 +437,46 @@ class _PostCardState extends State<PostCard> {
               children: [
                 SizedBox(
                   height: 300, // Adjusted height for the comment list
-                  child: postLikes.isEmpty
-                      ? Center(child: Text('No comments yet.', style: TextStyle(color: Colors.black),))
-                      : ListView.builder(
-                    itemCount: postLikes.length,
-                    itemBuilder: (context, index) {
-                      final comment = postLikes[index];
-                      print("INK COMMENT: $comment");
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: comment['profilePicture'] != null || comment['profilePicture'] != ""
-                              ? CachedNetworkImageProvider(
-                            imagePathSetter(
-                              imageName: comment['profilePicture'],
-                              imageSize: "MEDIUM",
-                              requestingImageType: "PROFILE",
-                              setUserId: comment['userId'].toString(),
+                  child:
+                      postLikes.isEmpty
+                          ? Center(
+                            child: Text(
+                              'No comments yet.',
+                              style: TextStyle(color: Colors.black),
                             ),
                           )
-                              : AssetImage('assets/profile_images.png') as ImageProvider,
-                        ),
-                        title: Text(comment['displayName'] ?? 'Unknown User',style: TextStyle(color: Colors.black))
-                      );
-                    },
-                  ),
+                          : ListView.builder(
+                            itemCount: postLikes.length,
+                            itemBuilder: (context, index) {
+                              final comment = postLikes[index];
+                              print("INK COMMENT: $comment");
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundImage:
+                                      comment['profilePicture'] != null ||
+                                              comment['profilePicture'] != ""
+                                          ? CachedNetworkImageProvider(
+                                            imagePathSetter(
+                                              imageName:
+                                                  comment['profilePicture'],
+                                              imageSize: "MEDIUM",
+                                              requestingImageType: "PROFILE",
+                                              setUserId:
+                                                  comment['userId'].toString(),
+                                            ),
+                                          )
+                                          : AssetImage(
+                                                'assets/profile_images.png',
+                                              )
+                                              as ImageProvider,
+                                ),
+                                title: Text(
+                                  comment['displayName'] ?? 'Unknown User',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              );
+                            },
+                          ),
                 ),
               ],
             ),
@@ -466,25 +557,31 @@ class _PostCardState extends State<PostCard> {
     return InkWell(
       onTap: onPressed,
       child: Column(
-        children: [Icon(icon, size: 40, color: Colors.black), SizedBox(height: 8), Text(label, style: TextStyle(color: Colors.black))],
+        children: [
+          Icon(icon, size: 40, color: Colors.black),
+          SizedBox(height: 8),
+          Text(label, style: TextStyle(color: Colors.black)),
+        ],
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final DateTime postDate = DateTime.parse(widget.wallPost['createdAt']);
     final String formattedDate = timeago.format(postDate);
 
-    ImageProvider<Object>? _profileImage = widget.wallPost['userProfileImage'] != null
-        ? CachedNetworkImageProvider(
-      imagePathSetter(
-        imageName: widget.wallPost['userProfileImage'],
-        imageSize: "MEDIUM",
-        requestingImageType: "PROFILE",
-        setUserId: widget.wallPost['userId'].toString(),
-      ),
-    )
-        : AssetImage('assets/profile_images.png');
+    ImageProvider<Object>? _profileImage =
+        widget.wallPost['userProfileImage'] != null
+            ? CachedNetworkImageProvider(
+              imagePathSetter(
+                imageName: widget.wallPost['userProfileImage'],
+                imageSize: "MEDIUM",
+                requestingImageType: "PROFILE",
+                setUserId: widget.wallPost['userId'].toString(),
+              ),
+            )
+            : AssetImage('assets/profile_images.png');
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8),
@@ -492,21 +589,19 @@ class _PostCardState extends State<PostCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: CircleAvatar(
-              backgroundImage: _profileImage,
-            ),
+            leading: CircleAvatar(backgroundImage: _profileImage),
             title: GestureDetector(
               onTap: () {
                 callProfileScreen();
-
               },
               child: Text(
                 widget.wallPost['userName'],
                 style: GoogleFonts.poppins(
                   textStyle: TextStyle(
-                      color: Colors.black,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500),
+                    color: Colors.black,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
@@ -544,16 +639,28 @@ class _PostCardState extends State<PostCard> {
                         children: [
                           // Section 1
                           ListTile(
-                            title: Text("Interested", style: TextStyle(color: Colors.black),),
-                            leading: Icon(Icons.add_circle, color: Colors.black,),
+                            title: Text(
+                              "Interested",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(
+                              Icons.add_circle,
+                              color: Colors.black,
+                            ),
                             onTap: () {
                               Navigator.pop(context);
                               print("Interested selected");
                             },
                           ),
                           ListTile(
-                            title: Text("Not Interested", style: TextStyle(color: Colors.black),),
-                            leading: Icon(Icons.remove_circle, color: Colors.black,),
+                            title: Text(
+                              "Not Interested",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(
+                              Icons.remove_circle,
+                              color: Colors.black,
+                            ),
                             onTap: () {
                               Navigator.pop(context);
                               print("Not Interested selected");
@@ -562,40 +669,61 @@ class _PostCardState extends State<PostCard> {
                           Divider(),
                           // Section 2
                           ListTile(
-                            title: Text("Save Link", style: TextStyle(color: Colors.black),),
-                            leading: Icon(Icons.save_alt, color: Colors.black,),
+                            title: Text(
+                              "Save Link",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(Icons.save_alt, color: Colors.black),
                             onTap: () {
                               Navigator.pop(context);
                               print("Save Link selected");
                             },
                           ),
                           ListTile(
-                            title: Text("Hide ad", style: TextStyle(color: Colors.black),),
-                            leading: Icon(Icons.hide_source, color: Colors.black,),
+                            title: Text(
+                              "Hide ad",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(
+                              Icons.hide_source,
+                              color: Colors.black,
+                            ),
                             onTap: () {
                               Navigator.pop(context);
                               print("Hide ad selected");
                             },
                           ),
                           ListTile(
-                            title: Text("Report ad", style: TextStyle(color: Colors.black),),
-                            leading: Icon(Icons.report, color: Colors.black,),
+                            title: Text(
+                              "Report ad",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(Icons.report, color: Colors.black),
                             onTap: () {
                               Navigator.pop(context);
                               print("Report ad selected");
                             },
                           ),
                           ListTile(
-                            title: Text("Why I am seeing this?", style: TextStyle(color: Colors.black),),
-                            leading: Icon(Icons.remove_red_eye, color: Colors.black,),
+                            title: Text(
+                              "Why I am seeing this?",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(
+                              Icons.remove_red_eye,
+                              color: Colors.black,
+                            ),
                             onTap: () {
                               Navigator.pop(context);
                               print("Why I am seeing this? selected");
                             },
                           ),
                           ListTile(
-                            title: Text("Be notified about this post", style: TextStyle(color: Colors.black),),
-                            leading: Icon(Icons.post_add, color: Colors.black,),
+                            title: Text(
+                              "Be notified about this post",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(Icons.post_add, color: Colors.black),
                             onTap: () {
                               Navigator.pop(context);
                               print("Be notified about this post selected");
@@ -614,67 +742,81 @@ class _PostCardState extends State<PostCard> {
             padding: const EdgeInsets.all(8.0),
             child: ExpandableText(widget.wallPost['contentText'].toString()),
           ),
-          widget.wallPost['Media'] != null ?GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FullScreenImage(data: widget.wallPost),
-                ),
-              );
-            },
-            child: AspectRatio(
-              aspectRatio: widget.wallPost['Media'] != null &&
-                  widget.wallPost['Media'].length == 1
-                  ? 16 / 20 // Aspect ratio for single image (full width)
-                  : 1 / 1, // Aspect ratio for grid (square images)
-              child: widget.wallPost['Media'] != null &&
-                  widget.wallPost['Media'].length > 0
-                  ? widget.wallPost['Media'].length == 1
-                  ? ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: CachedNetworkImage(
-                  imageUrl: imagePathSetter(
-                    imageName: widget.wallPost['Media'][0]['url'],
-                    imageSize: "MEDIUM", // Use larger size for single image
-                    requestingImageType: "POST",
-                    setUserId: widget.wallPost['userId'].toString(),
-                  ),
-                  fit: BoxFit.cover,
-                ),
-              )
-                  : GridView.builder(
-                padding: const EdgeInsets.all(8.0),
-                gridDelegate:
-                SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount:
-                  widget.wallPost['Media'].length < 1 ? 1 : 2, // Show single column if less than 1, else 2
-                  crossAxisSpacing: 8.0,
-                  mainAxisSpacing: 8.0,
-                ),
-                itemCount: widget.wallPost['Media'].length,
-                itemBuilder: (context, index) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: CachedNetworkImage(
-                      imageUrl: imagePathSetter(
-                        imageName: widget.wallPost['Media'][index]
-                        ['url'],
-                        imageSize: "MEDIUM",
-                        requestingImageType: "POST",
-                        setUserId:
-                        widget.wallPost['userId'].toString(),
-                      ),
-                      fit: BoxFit.cover,
+          widget.wallPost['Media'] != null
+              ? GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => FullScreenImage(data: widget.wallPost),
                     ),
                   );
                 },
+                child: AspectRatio(
+                  aspectRatio:
+                      widget.wallPost['Media'] != null &&
+                              widget.wallPost['Media'].length == 1
+                          ? 16 /
+                              20 // Aspect ratio for single image (full width)
+                          : 1 / 1, // Aspect ratio for grid (square images)
+                  child:
+                      widget.wallPost['Media'] != null &&
+                              widget.wallPost['Media'].length > 0
+                          ? widget.wallPost['Media'].length == 1
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: CachedNetworkImage(
+                                  imageUrl: imagePathSetter(
+                                    imageName:
+                                        widget.wallPost['Media'][0]['url'],
+                                    imageSize:
+                                        "MEDIUM", // Use larger size for single image
+                                    requestingImageType: "POST",
+                                    setUserId:
+                                        widget.wallPost['userId'].toString(),
+                                  ),
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                              : GridView.builder(
+                                padding: const EdgeInsets.all(8.0),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount:
+                                          widget.wallPost['Media'].length < 1
+                                              ? 1
+                                              : 2,
+                                      // Show single column if less than 1, else 2
+                                      crossAxisSpacing: 8.0,
+                                      mainAxisSpacing: 8.0,
+                                    ),
+                                itemCount: widget.wallPost['Media'].length,
+                                itemBuilder: (context, index) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: CachedNetworkImage(
+                                      imageUrl: imagePathSetter(
+                                        imageName:
+                                            widget
+                                                .wallPost['Media'][index]['url'],
+                                        imageSize: "MEDIUM",
+                                        requestingImageType: "POST",
+                                        setUserId:
+                                            widget.wallPost['userId']
+                                                .toString(),
+                                      ),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  );
+                                },
+                              )
+                          : Text('No media available'),
+                ),
               )
-                  : Text('No media available'),
-            ),
-          ):SizedBox(),
+              : SizedBox(),
           Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+            padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -690,7 +832,6 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
-
                 GestureDetector(
                   onTap: () {
                     _getComments(widget.wallPost['wallId'].toString());
@@ -719,10 +860,13 @@ class _PostCardState extends State<PostCard> {
                     children: [
                       IconButton(
                         icon: Icon(
-                          isLiked ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
-                          color: isLiked
-                              ? Colors.purpleAccent
-                              : Theme.of(context).colorScheme.primary,
+                          isLiked
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_alt_outlined,
+                          color:
+                              isLiked
+                                  ? Colors.purpleAccent
+                                  : Theme.of(context).colorScheme.primary,
                         ),
                         onPressed: _likePost,
                       ),
@@ -731,20 +875,21 @@ class _PostCardState extends State<PostCard> {
                   ),
                 ),
 
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
+                GestureDetector(
+                  onTap: () {
+                    _getComments(widget.wallPost['wallId'].toString());
+                    _showCommentBottomSheet(context);
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
                         Icons.comment,
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      onPressed: () {
-                        _getComments(widget.wallPost['wallId'].toString());
-                        _showCommentBottomSheet(context);
-                      },
-                    ),
-                    Text("Comment", style: TextStyle(color: Colors.black)),
-                  ],
+                      SizedBox(width: 10),
+                      Text("Comment", style: TextStyle(color: Colors.black)),
+                    ],
+                  ),
                 ),
                 Row(
                   children: [

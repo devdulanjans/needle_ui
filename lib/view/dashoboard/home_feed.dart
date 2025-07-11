@@ -195,10 +195,10 @@ class _HomeFeedState extends State<HomeFeed> {
               ),
             ],
           ),
-          Divider(height: 1, color: Colors.black12),
+          // Divider(height: 1, color: Colors.black12),
           Container(
-            height: 50,
-            margin: EdgeInsets.symmetric(vertical: 10),
+            height: 40,
+            margin: EdgeInsets.only(top: 0, bottom: 10),
             color: Colors.white,
             child: Center(
               child: ListTile(
@@ -210,15 +210,13 @@ class _HomeFeedState extends State<HomeFeed> {
                 trailing: IconButton(
                   icon: Icon(Icons.image,
                       color: Theme.of(context).colorScheme.primary),
-                  onPressed: () async {
-                    await showSearch(
-                      context: context,
-                      delegate: DataSearch(search: _search),
+                  onPressed: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CreatePostPage(),
+                      ),
                     );
-                    setState(() {
-                      _searchResults = [];
-                      _searchQuery = '';
-                    });
                   },
                 ),
                 title: GestureDetector(
@@ -234,13 +232,14 @@ class _HomeFeedState extends State<HomeFeed> {
                     "What's on your mind?",
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
+                      fontSize: 13
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          Divider(height: 3, color: Colors.black12),
+          Divider(height: 10, color: Colors.black12,thickness: 3,),
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())

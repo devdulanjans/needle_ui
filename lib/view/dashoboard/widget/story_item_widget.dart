@@ -74,7 +74,7 @@ class _StoryItemState extends State<StoryItem> {
             child: Container(
               width: 100,
               height: 147,
-              margin: EdgeInsets.all(5),
+              // margin: EdgeInsets.all(2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 image: DecorationImage(

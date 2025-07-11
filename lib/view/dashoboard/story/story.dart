@@ -114,6 +114,7 @@ class _StoriesListState extends State<StoriesList> {
                     // controller: _scrollController,
                     scrollDirection: Axis.horizontal,
                     itemCount: _stories.length,
+
                     itemBuilder: (context, index) {
                       return StoryItem(stories: _stories[index], allStories: _stories.cast<Map<String, dynamic>>());
                     },

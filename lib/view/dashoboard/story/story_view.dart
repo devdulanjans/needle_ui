@@ -97,79 +97,122 @@ class _StoryDetailsPageState extends State<StoryDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: PageView.builder(
-        physics: NeverScrollableScrollPhysics(), // Disable swiping
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _progressValue = 0.0; // Reset progress on page change
-            _currentIndex = index;
-          });
-          _startTimer();
-        },
-        itemCount: widget.stories.length,
-        itemBuilder: (context, index) {
-          final story = widget.stories[index];
-          return GestureDetector(
-            onTapDown: (_) => _pauseTimer(), // Pause timer on single tap
-            onTapUp: (_) => _resumeTimer(), // Resume timer after untap
-            onTapCancel: () => _resumeTimer(), // Resume timer if tap is canceled
-            onLongPressStart: (_) => _pauseTimer(), // Pause timer on long press
-            onLongPressEnd: (_) => _resumeTimer(), // Resume timer after long press ends
-            child: Stack(
+      body: Stack(
+        children: [
+          PageView.builder(
+            // physics: NeverScrollableScrollPhysics(), // Disable swiping initially
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _progressValue = 0.0; // Reset progress on page change
+                _currentIndex = index;
+              });
+              _startTimer();
+            },
+            itemCount: widget.stories.length,
+            itemBuilder: (context, index) {
+              final story = widget.stories[index];
+              return GestureDetector(
+                onTapDown: (_) => _pauseTimer(), // Pause timer on single tap
+                onTapUp: (_) => _resumeTimer(), // Resume timer after untap
+                onTapCancel: () => _resumeTimer(), // Resume timer if tap is canceled
+                onLongPressStart: (_) => _pauseTimer(), // Pause timer on long press
+                onLongPressEnd: (_) => _resumeTimer(), // Resume timer after long press ends
+                child: Stack(
+                  children: [
+                    Container(
+                      height: MediaQuery.of(context).size.height,
+                      width: MediaQuery.of(context).size.width,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: story['contentMediaUrl'] != null &&
+                                  story['contentMediaUrl'].isNotEmpty
+                              ? CachedNetworkImageProvider(
+                                  imagePathSetter(
+                                    imageName: story['contentMediaUrl'],
+                                    imageSize: "THUMBNAIL",
+                                    requestingImageType: "STORY",
+                                    setUserId: story['userId']?.toString() ?? "0",
+                                  ),
+                                )
+                              : AssetImage("assets/profile_images.png")
+                                  as ImageProvider,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 40,
+                      left: 16,
+                      right: 16,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: 20, // Adjust position as needed
+                      left: 16,
+                      right: 16,
+                      child: LinearProgressIndicator(
+                        value: _progressValue,
+                        backgroundColor: Colors.grey[700],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.purpleAccent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Add invisible tap areas for navigation
+          Positioned.fill(
+            child: Row(
               children: [
-                Container(
-                  height: MediaQuery.of(context).size.height,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(
-                      image: story['contentMediaUrl'] != null &&
-                              story['contentMediaUrl'].isNotEmpty
-                          ? CachedNetworkImageProvider(
-                              imagePathSetter(
-                                imageName: story['contentMediaUrl'],
-                                imageSize: "THUMBNAIL",
-                                requestingImageType: "STORY",
-                                setUserId: story['userId']?.toString() ?? "0",
-                              ),
-                            )
-                          : AssetImage("assets/profile_images.png")
-                              as ImageProvider,
-                      fit: BoxFit.contain,
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_currentIndex > 0) {
+                        _pageController.previousPage(
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    },
+                    child: Container(
+                      color: Colors.transparent, // Make it invisible
                     ),
                   ),
                 ),
-                Positioned(
-                  top: 40,
-                  left: 16,
-                  right: 16,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 20, // Adjust position as needed
-                  left: 16,
-                  right: 16,
-                  child: LinearProgressIndicator(
-                    value: _progressValue,
-                    backgroundColor: Colors.grey[700],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.purpleAccent,
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_currentIndex < widget.stories.length - 1) {
+                        _pageController.nextPage(
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      color: Colors.transparent, // Make it invisible
                     ),
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

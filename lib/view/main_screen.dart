@@ -5,6 +5,7 @@ import '../controller/config/image_path_setter.dart';
 import 'dashoboard/friends/friends.dart';
 import 'dashoboard/home_feed.dart';
 import 'dashoboard/pooling.dart';
+import 'dashoboard/profile/profile.dart';
 import 'dashoboard/profile/user_menu.dart';
 import 'dashoboard/video/video_feed.dart';
 
@@ -19,18 +20,41 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   String _profileImage = "";
+  var _finalGetUserId = "";
+  late List<Widget> _screens;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _screens = [
+      HomeFeed(),
+      VideoFeed(),
+      FriendsPage(),
+      PollsScreen(),
+      ProfileScreen(userId: _finalGetUserId)
+      // ProfileScreen(),
+      // UserMenu()
+    ];
     profileData();
   }
 
   Future<void> profileData()async{
     var _userId = await getUserId();
+    _finalGetUserId = _userId!;
     var _imageUrl = await getUserProfilePicture();
 
     setState(() {
+      _finalGetUserId = _userId!;
+      _screens = [
+        HomeFeed(),
+        VideoFeed(),
+        FriendsPage(),
+        PollsScreen(),
+        ProfileScreen(userId: _finalGetUserId)
+        // ProfileScreen(),
+        // UserMenu()
+      ];
 
       if(_imageUrl != null && _imageUrl.isNotEmpty){
         _profileImage = imagePathSetter(
@@ -50,14 +74,6 @@ class _MainScreenState extends State<MainScreen> {
 
   }
 
-  final List<Widget> _screens = [
-    HomeFeed(),
-    VideoFeed(),
-    FriendsPage(),
-    PollsScreen(),
-    // ProfileScreen(),
-    UserMenu()
-  ];
 
   Future<bool> _onWillPop() async {
     return await showDialog(
