@@ -76,6 +76,22 @@ class _ViewPostDetailsState extends State<ViewPostDetails> {
               ),
               SizedBox(height: 10),
               Separator(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info, size: 25, color: Colors.purple),
+                  SizedBox(width: 5,),
+                  Text(
+                    "${widget.userName}'s Posts",
+                    style: TextStyle(
+                      fontSize: 16,
+                      // fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20,),
               UserDefinedPost(userDisplayName: widget.userName,userId: widget.userId,)
             ],
           ),

@@ -19,7 +19,7 @@ Future<dynamic> API_V1_call({
   Map<String, String>? headers = await header(isHeader: isHeader,oldAccessToken: oldAccessToken, type: type);
   var response;
 
-  if (method == "POST" || method == "PUT") {
+  if (method == "POST") {
     response = await http.post(
       Uri.parse(setUrl),
       body: jsonEncode(body),
@@ -27,7 +27,19 @@ Future<dynamic> API_V1_call({
     );
 
   } else if (method == "GET") {
+
     response = await http.get(Uri.parse(setUrl), headers: headers);
+
+  } else if (method == "PUT") {
+    response = await http.put(
+      Uri.parse(setUrl),
+      headers: headers,
+    );
+  } else if (method == "DELETE") {
+    response = await http.delete(
+      Uri.parse(setUrl),
+      headers: headers,
+    );
   }
   return response;
 }
@@ -38,7 +50,7 @@ Future<dynamic> API_V1_Multipart_call({
   Map<String, dynamic>? body,
   bool isHeader = true,
   List<String>? filePaths,
-  List<String?>? mediaTypes
+  List<String?>? mediaTypes// If true, only one image will be sent
 }) async {
 
   final setUrl = "${$baseUrl}${url}";
@@ -80,6 +92,57 @@ Future<dynamic> API_V1_Multipart_call({
 
   print("Final request fields: ${request.fields}");
   print("Final headers: ${request.headers}");
+
+  var response = await request.send();
+
+  print("Response Status: ${response.statusCode}");
+  print("Response Reason: ${response.reasonPhrase}");
+
+  // Read and return response body
+  final responseBody = await response.stream.bytesToString();
+  return responseBody;
+}
+
+Future<dynamic> API_V1_Multipart_call_Story({
+  required String url,
+  required String method,
+  Map<String, dynamic>? body,
+  bool isHeader = true,
+  String? filePaths,
+  String? mediaTypes// If true, only one image will be sent
+}) async {
+
+  print("filePaths: ${filePaths.toString()}");
+  print("mediaTypes: ${File(filePaths!).existsSync()}");
+
+  if (filePaths == null || filePaths.isEmpty) {
+    throw ArgumentError("filePaths cannot be null or empty");
+  }
+
+  final setUrl = "${$baseUrl}${url}";
+  Map<String, String>? headers = await header(isHeader: isHeader);
+  print("setUrl: ${setUrl}");
+
+  var request = http.MultipartRequest(method, Uri.parse(setUrl));
+
+  // Add fields to the request
+  if (body != null) {
+    request.fields.addAll(body.map((key, value) => MapEntry(key, value.toString())));
+    print("Request Body Fields: ${request.fields}");
+  }
+
+  print("ESP BODY: ${body}");
+  print("FILE PATH: ${filePaths.toString()}");
+
+  // Ensure filePath is a valid path string and the file exists
+  if (filePaths != null && File(filePaths).existsSync()) {
+    request.files.add(await http.MultipartFile.fromPath('file', filePaths));
+  } else {
+    print("File does not exist or path is invalid: $filePaths");
+    // Handle the error appropriately, maybe return an error response or throw an exception
+  }
+
+  request.headers.addAll(headers!);
 
   var response = await request.send();
 

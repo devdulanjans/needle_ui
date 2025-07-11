@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../controller/api/api_controller.dart';
 import '../../../controller/auth_controller.dart';
+import '../home_feed.dart';
 
 class CreatePostPage extends StatefulWidget {
   @override
@@ -278,9 +279,17 @@ class _CreatePostPageState extends State<CreatePostPage> {
             content: Text(allResponseData['message'], style: TextStyle(color: Colors.black),),
             actions: [
               TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                  Navigator.of(context).pop(); // Navigate to the previous page
+                onPressed: () async {
+                  // Pop the dialog
+                  Navigator.of(context).pop();
+                  // Navigate to HomeFeed and trigger refresh
+                  await Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => HomeFeed(refreshStories: true),
+                    ),
+                  );
+                  // Optionally, you can also pop the CreateStoryPage if you don't want to return to it
+                  // Navigator.of(context).pop();
                 },
                 child: Text("OK"),
               ),

@@ -3,13 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:needle2/view/dashoboard/profile/user_profile.dart';
-import 'package:needle2/view/dashoboard/profile/user_profile_details.dart' show UserListPage;
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../controller/api/api_controller.dart';
 import '../../controller/config/image_path_setter.dart';
-import '../../model/logged_user_profile_model.dart';
 import '../widget/expandableText.dart';
 import 'post/full_screenImage.dart';
 import 'profile/profile.dart';
@@ -19,6 +16,7 @@ class PostCard extends StatefulWidget {
 
   PostCard(this.wallPost);
 
+
   @override
   _PostCardState createState() => _PostCardState();
 }
@@ -26,20 +24,32 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   bool isLiked = false;
   int likeCount = 0;
+  String reactionType = "";
   final TextEditingController _commentController = TextEditingController();
   List<dynamic> comments = [];
+  List<dynamic> postLikes = [];
 
   @override
   void initState() {
     super.initState();
+    _getComments(widget.wallPost['wallId'].toString());
+    _getLikesOfPost();
     likeCount = widget.wallPost['likeCount'] ?? 0;
     isLiked = widget.wallPost['isLiked'] ?? false;
     print("widget.wallPost: ${widget.wallPost}");
   }
 
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
   void _likePost() async {
-    // Call the API to like/unlike the post
-    print("widget.wallPost['id']: ${widget.wallPost['wallId']}");
+
+    reactionType = reactionType.isEmpty ? "LIKE" : reactionType;
+
+    print("reactionType: $reactionType");
 
     var _bodyData = {
       "type":"COMMENT",
@@ -47,20 +57,14 @@ class _PostCardState extends State<PostCard> {
       "reaction":"LIKE"
     };
 
-    setState(() {
-      isLiked = !isLiked;
-      likeCount += isLiked ? 1 : -1;
-    });
-    // return;
     final response = await API_V1_call(
       url: "/api/interaction/like",
       body: _bodyData,
-      // url: "/api/post/like/${widget.wallPost['id']}",
       method: "POST",
     );
 
-    print("response.statusCode: ${response.statusCode}");
-    print("response.statusCode: ${response.body}");
+    print("14 response.statusCode: ${response.statusCode}");
+    print("14 response.statusCode: ${response.body}");
 
     if (response.statusCode == 200) {
       setState(() {
@@ -74,28 +78,26 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
-  void _commentPost() async {
+  void _getLikesOfPost()async{
 
     var _bodyData = {
-      "content":_commentController.text.toString()
+        "itemType":"COMMENT",
+        "itemId":widget.wallPost['wallId']
     };
 
-    // return;
     final response = await API_V1_call(
-      url: "/api/post/${widget.wallPost['wallId']}/comment",
+      url: "/api/interaction/likes",
       body: _bodyData,
-      // url: "/api/post/like/${widget.wallPost['id']}",
       method: "POST",
     );
-
-    print("response.statusCode: ${response.statusCode}");
-    print("response.statusCode: ${response.body}");
 
     if (response.statusCode == 200) {
 
       var data = [];
 
       final posts = jsonDecode(response.body)['data'];
+
+      print("all posts: $posts");
 
       if (posts != null) {
         data = (posts as List).reversed.toList();
@@ -106,13 +108,52 @@ class _PostCardState extends State<PostCard> {
 
       if (mounted) {
         setState(() {
+          postLikes = data;
+        });
+      }
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error liking the post')),
+      );
+    }
+
+  }
+
+  void _commentPost() async {
+
+    var _bodyData = {
+      "content":_commentController.text.toString()
+    };
+
+    final response = await API_V1_call(
+      url: "/api/post/${widget.wallPost['wallId']}/comment",
+      body: _bodyData,
+      method: "POST",
+    );
+
+    if (response.statusCode == 200) {
+
+      var data = [];
+
+      final posts = jsonDecode(response.body)['data'];
+
+      if (posts != null) {
+        data = (posts as List).reversed.toList();
+      } else {
+        print('Posts data is null');
+      }
+
+      if (mounted) {
+        setState(() {
           comments = data;
         });
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Commented on the post')),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(backgroundColor: Colors.red, content: Text('Error liking the post',style: TextStyle(color: Colors.white))),
+      // );
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error liking the post')),
@@ -136,13 +177,14 @@ class _PostCardState extends State<PostCard> {
       });
     }
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Commented on the post')),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(backgroundColor: Colors.purpleAccent ,content: Text('Commented on the post',style: TextStyle(color: Colors.white),)),
+      // );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error liking the post')),
+        SnackBar(backgroundColor: Colors.red, content: Text('Error Comment ',style: TextStyle(color: Colors.white))),
       );
+      print("Response Data ${jsonDecode(response.body)['data']}");
     }
 
   }
@@ -158,29 +200,41 @@ class _PostCardState extends State<PostCard> {
               IconButton(
                 icon: Icon(Icons.thumb_up, color: Colors.blue),
                 onPressed: () {
+                  setState(() {
+                    reactionType = "LIKE";
+                  });
+                  _likePost();
                   Navigator.pop(context);
-                  print("Like reaction selected");
                 },
               ),
               IconButton(
                 icon: Icon(Icons.favorite, color: Colors.red),
                 onPressed: () {
+                  setState(() {
+                    reactionType = "HEART";
+                  });
+                  _likePost();
                   Navigator.pop(context);
-                  print("Love reaction selected");
                 },
               ),
               IconButton(
                 icon: Icon(Icons.emoji_emotions, color: Colors.yellow),
                 onPressed: () {
+                  setState(() {
+                    reactionType = "HAHA";
+                  });
+                  _likePost();
                   Navigator.pop(context);
-                  print("Happy reaction selected");
                 },
               ),
               IconButton(
                 icon: Icon(Icons.emoji_emotions_sharp, color: Colors.red),
                 onPressed: () {
+                  setState(() {
+                    reactionType = "ANGRY";
+                  });
+                  _likePost();
                   Navigator.pop(context);
-                  print("Angry reaction selected");
                 },
               ),
             ],
@@ -191,18 +245,6 @@ class _PostCardState extends State<PostCard> {
   }
 
   void callProfileScreen() {
-
-    // Map<String, dynamic> userData = {
-    //   "id": widget.wallPost['userId'],
-    //   "displayName": widget.wallPost['userName'],
-    //   "email": widget.wallPost['userId'].toString() ?? "",
-    //   "bio": widget.wallPost['userId'].toString() ?? "",
-    //   "profilePicture": widget.wallPost['userProfilePicture'] ?? "",
-    //   "coverImage": widget.wallPost['userProfilePicture'] ?? "",
-    //   "mobileNo": widget.wallPost['userId'].toString() ?? "",
-    // };
-    //
-    // LoggedUserProfile userProfile = LoggedUserProfile.fromJson(userData);
 
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -219,18 +261,19 @@ class _PostCardState extends State<PostCard> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return Container(
-          height: 400, // Set the desired height here
+        return SingleChildScrollView(
+          // height: 400, // Set the desired height here
           child: Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
+              bottom: 40,
               left: 16.0,
               right: 16.0,
               top: 16.0,
             ),
             child: Column(
               children: [
-                Expanded(
+                SizedBox(
+                  height: 300, // Adjusted height for the comment list
                   child: comments.isEmpty
                       ? Center(child: Text('No comments yet.', style: TextStyle(color: Colors.black),))
                       : ListView.builder(
@@ -264,6 +307,7 @@ class _PostCardState extends State<PostCard> {
                     children: [
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 100 - 32, // Adjusted for padding
+                        height: 50,
                         child: TextField(
                           style: TextStyle(color: Colors.black),
                           controller: _commentController,
@@ -291,12 +335,139 @@ class _PostCardState extends State<PostCard> {
                       ),
                     ],
                   ),
-                    ),
+                ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  void _showLikeBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return SingleChildScrollView(
+          // height: 400, // Set the desired height here
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: 40,
+              left: 16.0,
+              right: 16.0,
+              top: 16.0,
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 300, // Adjusted height for the comment list
+                  child: postLikes.isEmpty
+                      ? Center(child: Text('No comments yet.', style: TextStyle(color: Colors.black),))
+                      : ListView.builder(
+                    itemCount: postLikes.length,
+                    itemBuilder: (context, index) {
+                      final comment = postLikes[index];
+                      print("INK COMMENT: $comment");
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: comment['profilePicture'] != null || comment['profilePicture'] != ""
+                              ? CachedNetworkImageProvider(
+                            imagePathSetter(
+                              imageName: comment['profilePicture'],
+                              imageSize: "MEDIUM",
+                              requestingImageType: "PROFILE",
+                              setUserId: comment['userId'].toString(),
+                            ),
+                          )
+                              : AssetImage('assets/profile_images.png') as ImageProvider,
+                        ),
+                        title: Text(comment['displayName'] ?? 'Unknown User',style: TextStyle(color: Colors.black))
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showShareBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          height: 400, // Adjusted height to accommodate more icons
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Share to',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 16),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 4, // Number of icons per row
+                  crossAxisSpacing: 16.0,
+                  mainAxisSpacing: 16.0,
+                  children: [
+                    _buildShareIcon(Icons.facebook, 'Facebook', () {
+                      // Add Facebook sharing logic
+                      // Share.share('Check out this post: ${widget.wallPost['contentText']}', subject: 'Shared from My App');
+                      Navigator.pop(context);
+                    }),
+                    _buildShareIcon(Icons.message, 'WhatsApp', () {
+                      // Add WhatsApp sharing logic
+                      // Share.share('Check out this post: ${widget.wallPost['contentText']}', subject: 'Shared from My App');
+                      Navigator.pop(context);
+                    }),
+                    _buildShareIcon(Icons.alternate_email, 'Twitter', () {
+                      // Add Twitter sharing logic
+                      // Share.share('Check out this post: ${widget.wallPost['contentText']}', subject: 'Shared from My App');
+                      Navigator.pop(context);
+                    }),
+                    _buildShareIcon(Icons.link, 'Copy Link', () {
+                      // Add copy link logic
+                      Navigator.pop(context);
+                    }),
+                    _buildShareIcon(Icons.email, 'Email', () {
+                      // Add email sharing logic
+                      Navigator.pop(context);
+                    }),
+                    _buildShareIcon(Icons.sms, 'SMS', () {
+                      // Add SMS sharing logic
+                      Navigator.pop(context);
+                    }),
+                    _buildShareIcon(Icons.more_horiz, 'More', () {
+                      // Add more options logic
+                      Navigator.pop(context);
+                    }),
+                    // Add more icons as needed
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildShareIcon(IconData icon, String label, VoidCallback onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      child: Column(
+        children: [Icon(icon, size: 40, color: Colors.black), SizedBox(height: 8), Text(label, style: TextStyle(color: Colors.black))],
+      ),
     );
   }
   @override
@@ -363,6 +534,78 @@ class _PostCardState extends State<PostCard> {
                 color: Theme.of(context).colorScheme.primary,
               ),
               onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) {
+                    return Container(
+                      padding: EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Section 1
+                          ListTile(
+                            title: Text("Interested", style: TextStyle(color: Colors.black),),
+                            leading: Icon(Icons.add_circle, color: Colors.black,),
+                            onTap: () {
+                              Navigator.pop(context);
+                              print("Interested selected");
+                            },
+                          ),
+                          ListTile(
+                            title: Text("Not Interested", style: TextStyle(color: Colors.black),),
+                            leading: Icon(Icons.remove_circle, color: Colors.black,),
+                            onTap: () {
+                              Navigator.pop(context);
+                              print("Not Interested selected");
+                            },
+                          ),
+                          Divider(),
+                          // Section 2
+                          ListTile(
+                            title: Text("Save Link", style: TextStyle(color: Colors.black),),
+                            leading: Icon(Icons.save_alt, color: Colors.black,),
+                            onTap: () {
+                              Navigator.pop(context);
+                              print("Save Link selected");
+                            },
+                          ),
+                          ListTile(
+                            title: Text("Hide ad", style: TextStyle(color: Colors.black),),
+                            leading: Icon(Icons.hide_source, color: Colors.black,),
+                            onTap: () {
+                              Navigator.pop(context);
+                              print("Hide ad selected");
+                            },
+                          ),
+                          ListTile(
+                            title: Text("Report ad", style: TextStyle(color: Colors.black),),
+                            leading: Icon(Icons.report, color: Colors.black,),
+                            onTap: () {
+                              Navigator.pop(context);
+                              print("Report ad selected");
+                            },
+                          ),
+                          ListTile(
+                            title: Text("Why I am seeing this?", style: TextStyle(color: Colors.black),),
+                            leading: Icon(Icons.remove_red_eye, color: Colors.black,),
+                            onTap: () {
+                              Navigator.pop(context);
+                              print("Why I am seeing this? selected");
+                            },
+                          ),
+                          ListTile(
+                            title: Text("Be notified about this post", style: TextStyle(color: Colors.black),),
+                            leading: Icon(Icons.post_add, color: Colors.black,),
+                            onTap: () {
+                              Navigator.pop(context);
+                              print("Be notified about this post selected");
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
                 // Add your bottom sheet logic here
               },
             ),
@@ -381,13 +624,31 @@ class _PostCardState extends State<PostCard> {
               );
             },
             child: AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: widget.wallPost['Media'] != null &&
+                  widget.wallPost['Media'].length == 1
+                  ? 16 / 20 // Aspect ratio for single image (full width)
+                  : 1 / 1, // Aspect ratio for grid (square images)
               child: widget.wallPost['Media'] != null &&
                   widget.wallPost['Media'].length > 0
-                  ? GridView.builder(
+                  ? widget.wallPost['Media'].length == 1
+                  ? ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: CachedNetworkImage(
+                  imageUrl: imagePathSetter(
+                    imageName: widget.wallPost['Media'][0]['url'],
+                    imageSize: "MEDIUM", // Use larger size for single image
+                    requestingImageType: "POST",
+                    setUserId: widget.wallPost['userId'].toString(),
+                  ),
+                  fit: BoxFit.cover,
+                ),
+              )
+                  : GridView.builder(
                 padding: const EdgeInsets.all(8.0),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate:
+                SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount:
+                  widget.wallPost['Media'].length < 1 ? 1 : 2, // Show single column if less than 1, else 2
                   crossAxisSpacing: 8.0,
                   mainAxisSpacing: 8.0,
                 ),
@@ -397,10 +658,12 @@ class _PostCardState extends State<PostCard> {
                     borderRadius: BorderRadius.circular(8.0),
                     child: CachedNetworkImage(
                       imageUrl: imagePathSetter(
-                        imageName: widget.wallPost['Media'][index]['url'],
+                        imageName: widget.wallPost['Media'][index]
+                        ['url'],
                         imageSize: "MEDIUM",
                         requestingImageType: "POST",
-                        setUserId: widget.wallPost['userId'].toString(),
+                        setUserId:
+                        widget.wallPost['userId'].toString(),
                       ),
                       fit: BoxFit.cover,
                     ),
@@ -410,24 +673,40 @@ class _PostCardState extends State<PostCard> {
                   : Text('No media available'),
             ),
           ):SizedBox(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  _getComments(widget.wallPost['wallId'].toString());
-                  _showCommentBottomSheet(context);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: Text(
-                    "${widget.wallPost['totalComments'] ?? 0} Comments",
-                    style: TextStyle(color: Colors.black54),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    _showLikeBottomSheet(context);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: Text(
+                      "${postLikes.length} Likes",
+                      style: TextStyle(color: Colors.black54),
+                    ),
                   ),
                 ),
-              ),
-              // Text("Comments", style: TextStyle(color: Colors.black))
-            ],
+
+                GestureDetector(
+                  onTap: () {
+                    _getComments(widget.wallPost['wallId'].toString());
+                    _showCommentBottomSheet(context);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: Text(
+                      "${comments.length} Comments",
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+                ),
+                // Text("Comments", style: TextStyle(color: Colors.black))
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -440,9 +719,9 @@ class _PostCardState extends State<PostCard> {
                     children: [
                       IconButton(
                         icon: Icon(
-                          isLiked ? Icons.favorite : Icons.favorite_border,
+                          isLiked ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
                           color: isLiked
-                              ? Colors.red
+                              ? Colors.purpleAccent
                               : Theme.of(context).colorScheme.primary,
                         ),
                         onPressed: _likePost,
@@ -474,7 +753,9 @@ class _PostCardState extends State<PostCard> {
                         Icons.share,
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        _showShareBottomSheet(context);
+                      },
                     ),
                     Text("Share", style: TextStyle(color: Colors.black)),
                   ],
@@ -485,11 +766,5 @@ class _PostCardState extends State<PostCard> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _commentController.dispose();
-    super.dispose();
   }
 }

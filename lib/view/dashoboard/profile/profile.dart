@@ -44,18 +44,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     String? userId = await getUserId();
 
+    print("AS FRIEND userId: ${userId}");
+    print("widget.userProfile?.id: ${fetchedUserData?.id}");
+
     try {
+
       Map<String, dynamic>? body = {
-        "senderUserId": userId,
-        "receiverUserId": widget.userProfile?.id,
+        "senderUserId": int.parse(userId!),
+        "receiverUserId": int.parse(fetchedUserData!.id.toString()),
       };
 
+      print("body: $body");
       final response = await API_V1_call(
         url: "/api/friend-request",
         method: "POST",
         body: body,
         isHeader: true,
       );
+
+      print("response.statusCode: ${response.body}");
 
       if (response.statusCode == 200) {
         setState(() {
@@ -154,62 +161,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget loggedUserData() {
-    return Row(
-      children: [
-        ElevatedButton(
-          onPressed: (){},
-          // onPressed: isLoading ? null : _handleAddFriend,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isFriend ? Colors.red : Colors.purple,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        bool isNarrow = constraints.maxWidth < 360;
+
+        return Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isFriend ? Colors.red : Colors.purple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: isLoading
+                    ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                    : FittedBox(
+                  child: Row(
+                    children: [
+                      Icon(Icons.dashboard, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'Professional dashboard',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-          child: isLoading
-              ? SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
+            SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isFriend ? Colors.red : Colors.purple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: isLoading
+                    ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                    : FittedBox(
+                  child: Row(
+                    children: [
+                      Icon(Icons.post_add, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'Create Post',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          )
-              : Row(
-            children: [
-              Icon(Icons.dashboard, color: Colors.white),
-              SizedBox(width: 4),
-              Text('Professional dashboard', style: TextStyle(color: Colors.white)),
-            ],
-          ),
-        ),
-        SizedBox(width: 4),
-        ElevatedButton(
-          onPressed: (){},
-          // onPressed: isLoading ? null : _handleAddFriend,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isFriend ? Colors.red : Colors.purple,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: isLoading
-              ? SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
-            ),
-          )
-              : Row(
-            children: [
-              Icon(Icons.post_add, color: Colors.white),
-              SizedBox(width: 4),
-              Text('Create Post', style: TextStyle(color: Colors.white)),
-            ],
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -338,46 +365,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? Text(fetchedUserData?.bio ?? '', style: TextStyle(color: Colors.black))
                         : SizedBox.shrink(),
                     SizedBox(height: 16),
-                    Row(
-                      children: [
-                        loggedUserId == fetchedUserData!.id.toString()
-                            ? loggedUserData()
-                            : Expanded(
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _handleAddFriend,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isFriend ? Colors.red : Colors.purple,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: isLoading
-                                ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                                : Text(
-                              isFriend ? 'Unfriend' : 'Add As Friend',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        loggedUserId == fetchedUserData!.id.toString()
-                            ? SizedBox.shrink()
-                            : ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => UserListPage(
-                                  userDisplayName: fetchedUserData?.displayName ?? 'Unknown User',
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        bool isWide = constraints.maxWidth > 400;
+
+                        return Row(
+                          children: [
+                            if (loggedUserId == fetchedUserData!.id.toString())
+                              Expanded(child: loggedUserData())
+                            else
+                              Expanded(
+                                flex: isWide ? 3 : 2,
+                                child: ElevatedButton(
+                                  onPressed: isLoading ? null : _handleAddFriend,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isFriend ? Colors.red : Colors.purple,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: isLoading
+                                      ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                      : FittedBox(
+                                    child: Text(
+                                      isFriend ? 'Unfriend' : 'Add As Friend',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            );
-                          },
-                          child: Icon(Icons.menu, color: Colors.black),
-                        ),
-                      ],
-                    ),
+                            SizedBox(width: 8),
+                            if (loggedUserId != fetchedUserData!.id.toString())
+                              Expanded(
+                                flex: 1,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey.shade200,
+                                    padding: EdgeInsets.symmetric(horizontal: 12),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => UserListPage(
+                                          userDisplayName: fetchedUserData?.displayName ?? 'Unknown User',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Icon(Icons.menu, color: Colors.black),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    )
                   ],
                 ),
               ),

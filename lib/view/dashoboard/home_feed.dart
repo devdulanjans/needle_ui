@@ -12,6 +12,8 @@ import 'profile/profile.dart';
 import 'story/story.dart';
 
 class HomeFeed extends StatefulWidget {
+  final bool refreshStories;
+  const HomeFeed({super.key, this.refreshStories = false});
   @override
   _HomeFeedState createState() => _HomeFeedState();
 }
@@ -22,12 +24,19 @@ class _HomeFeedState extends State<HomeFeed> {
   String _searchQuery = '';
   List<dynamic> _allPostData = [];
   String _profileImage = "";
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 0;
+  bool _isFetchingMore = false;
 
   @override
   void initState() {
     super.initState();
-    _getAllPost();
+    _getAllPost(page: _currentPage);
     profileData();
+    // if (widget.refreshStories) {
+    //   // Call your story fetching function here, for example:
+    //   // _fetchStories();
+    // }
   }
 
   Future<void> _search(String query) async {
@@ -89,9 +98,15 @@ class _HomeFeedState extends State<HomeFeed> {
 
   }
 
-  Future<void> _getAllPost() async {
+  Future<void> _getAllPost({int page = 0, int limit = 30}) async {
+    print("SCROLLING");
+    if (_isFetchingMore) return;
+    setState(() {
+      _isFetchingMore = true;
+    });
+
     var responseData = await API_V1_call(
-      url: "/api/post/all?page=0&limit=30",
+      url: "/api/post/all?page=$page&limit=$limit",
       method: "GET",
     );
 
@@ -99,21 +114,51 @@ class _HomeFeedState extends State<HomeFeed> {
       var data = [];
 
       final posts = jsonDecode(responseData.body)['data']['posts'];
+      print("123 - Posts data: $posts");
       if (posts != null) {
-        data = (posts as List).reversed.toList();
-        // Proceed with `data`
+        data = (posts as List);
+        data.shuffle();
+
+        print("00-123 - Posts data: $posts");
       } else {
         print('Posts data is null');
       }
 
       setState(() {
-        _allPostData = data;
+        if (page == 0) {
+          _allPostData = data;
+        } else {
+          _allPostData.addAll(data);
+        }
+        _currentPage = page;
+        _isFetchingMore = false;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching posts')),
       );
+      setState(() {
+        _isFetchingMore = false;
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+              _scrollController.position.maxScrollExtent &&
+          !_isFetchingMore) {
+        _getAllPost(page: _currentPage + 1);
+      }
+    });
   }
 
   @override
@@ -199,17 +244,27 @@ class _HomeFeedState extends State<HomeFeed> {
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())
-                : CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: StoriesList()),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) =>
-                        PostCard(_allPostData[index]),
-                    childCount: _allPostData.length,
+                : NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scrollInfo) {
+                if (!_isFetchingMore &&
+                    scrollInfo.metrics.pixels ==
+                        scrollInfo.metrics.maxScrollExtent) {
+                  _getAllPost(page: _currentPage + 1);
+                  return true;
+                }
+                return false;
+              },
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverToBoxAdapter(child: StoriesList()),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                        (context, index) => PostCard(_allPostData[index]),
+                        childCount: _allPostData.length),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

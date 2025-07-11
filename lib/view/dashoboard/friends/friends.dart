@@ -51,6 +51,39 @@ class _FriendsPageState extends State<FriendsPage> {
     var responseData = await API_V1_call(
       url: "/api/friend-request/status/${id}?status=ACCEPTED",
       method: "PUT",
+      isHeader: true,
+
+    );
+
+    if (responseData.statusCode == 200) {
+      final data = jsonDecode(responseData.body)['data'] == null
+          ? []
+          : jsonDecode(responseData.body)['data'];
+      print(responseData);
+      // ScaffoldMessenger.of(
+      //   context,
+      // ).showSnackBar(SnackBar(content: Text('Error fetching stories')));
+    } else {
+      // Handle error
+      setState(() {
+        // _isLoading = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error fetching stories')));
+    }
+  }
+
+  Future<void> friendRequestDelete(String id) async{
+
+    print("ID: ${id}");
+    print("URL: /api/friend-request/status/${id}?status=ACCEPTED");
+
+    var responseData = await API_V1_call(
+      url: "/api/friend-request/${id}",
+      method: "DELETE",
+      isHeader: true,
+
     );
 
     print('asd - Response: ${responseData.statusCode}');
@@ -165,6 +198,7 @@ class _FriendsPageState extends State<FriendsPage> {
                       child: OutlinedButton(
                         onPressed: () {
                           // Handle delete action
+                          friendRequestDelete(request.id.toString());
                         },
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(

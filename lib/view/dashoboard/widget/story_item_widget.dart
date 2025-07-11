@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 
 import '../../../controller/auth_controller.dart';
 import '../../../controller/config/image_path_setter.dart';
+// import '../../post/widgets/post_full_screen_image_view.dart';
 import '../story/create_story.dart';
+import '../story/story_view.dart';
 
 class StoryItem extends StatefulWidget {
-  StoryItem({
-    required this.stories
-  });
+  StoryItem({required this.stories, required this.allStories});
+
   Map<String, dynamic> stories;
+  List<Map<String, dynamic>> allStories = [];
 
   @override
   State<StoryItem> createState() => _StoryItemState();
@@ -17,30 +19,27 @@ class StoryItem extends StatefulWidget {
 
 class _StoryItemState extends State<StoryItem> {
   String _profileImage = "";
-  @override
 
-  Future<void> profileData()async{
+  @override
+  Future<void> profileData() async {
+    print("widget.stories: ${widget.stories}");
     var _userId = await getUserId();
     var _imageUrl = await getUserProfilePicture();
 
     setState(() {
-
-      if(_imageUrl != null && _imageUrl.isNotEmpty){
+      if (_imageUrl != null && _imageUrl.isNotEmpty) {
         _profileImage = imagePathSetter(
           imageName: _imageUrl,
           imageSize: "THUMBNAIL",
           requestingImageType: "PROFILE",
           setUserId: _userId,
         );
-
       } else {
         _profileImage = "";
       }
-
     });
 
     print("PROFILE IMAGE: $_profileImage");
-
   }
 
   initState() {
@@ -48,81 +47,138 @@ class _StoryItemState extends State<StoryItem> {
     profileData();
     // You can initialize any state here if needed
   }
+
   // Dart
   Widget build(BuildContext context) {
     print(widget.stories);
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 100, // Square shape
-            height: 150, // Square shape
-            margin: EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: widget.stories['contentMediaUrl'] != null && widget.stories['contentMediaUrl'].isNotEmpty
-                    ? CachedNetworkImageProvider(
-                  imagePathSetter(
-                    imageName: widget.stories['contentMediaUrl'],
-                    imageSize: "THUMBNAIL",
-                    requestingImageType: "STORY",
-                    setUserId: 8.toString(),
-                  ),
-                ):AssetImage("assets/profile_images.png"),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  bottom: 10,
-                  left: 10,
-                  child: Text(
-                    widget.stories['contentText'].toString(),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      backgroundColor: Colors.black54,
+          GestureDetector(
+            onTap: () {
+              if (widget.stories['contentMediaUrl'] != null &&
+                  widget.stories['contentMediaUrl'].isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StoryDetailsPage(
+                      stories: widget.allStories,
+                      initialIndex: widget.stories['id'],
                     ),
                   ),
-                ),
-                widget.stories['id'] == "0"
-                    ? Positioned(
-                        top: 50,
-                        right: 30,
-                        child: GestureDetector(
-                          onTap: (){
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => CreateStoryPage(
-                                  // userProfile: _results[index]
+                );
+              }
+            },
+            child: Container(
+              width: 100,
+              height: 147,
+              margin: EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: widget.stories['contentMediaUrl'] != null &&
+                          widget.stories['contentMediaUrl'].isNotEmpty
+                      ? CachedNetworkImageProvider(
+                          widget.stories['id'] == "0" &&
+                                  widget.stories['profileUrl'] != null &&
+                                  widget.stories['profileUrl'].isNotEmpty
+                              ? widget.stories['profileUrl']
+                              : imagePathSetter(
+                                  imageName: widget.stories['contentMediaUrl'],
+                                  imageSize: "THUMBNAIL",
+                                  requestingImageType: "STORY",
+                                  // Assuming "STORY" is the correct type for stories
+                                  setUserId: widget.stories['userId'] != null
+                                      ? widget.stories['userId'].toString()
+                                      : "0", // Provide a default or handle null userId
                                 ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.black26, width: 1),
-                            ),
-                            child: Icon(
-                              Icons.add,
-                              color: Colors.black,
-                              size: 30,
-                            ),
+                        )
+                      : AssetImage("assets/profile_images.png")
+                          as ImageProvider, // Cast to ImageProvider
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Story Image is the background of the container itself
+
+                  // Posted person image (oval) at top right
+                  if (widget.stories['id'] != "0" &&
+                      widget.stories['profileUrl'] != null &&
+                      widget.stories['profileUrl'].isNotEmpty)
+                    Positioned(
+                      top: 5,
+                      right: 5,
+                      child: CircleAvatar(
+                        radius: 15,
+                        backgroundImage: CachedNetworkImageProvider(
+                          imagePathSetter(
+                            imageName: widget.stories['profileUrl'],
+                            imageSize: "THUMBNAIL",
+                            requestingImageType: "PROFILE",
+                            setUserId: widget.stories['userId'] != null
+                                ? widget.stories['userId'].toString()
+                                : "0",
                           ),
                         ),
-                      )
-                    : Text(""),
-              ],
+                        backgroundColor: Colors.grey[300], // Placeholder color
+                      ),
+                    ),
+
+                  // Add story icon for the first item
+                  widget.stories['id'] == "0"
+                      ? Positioned(
+                          top: 0,
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateStoryPage(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: Colors.black26, width: 1),
+                                ),
+                                child: Icon(Icons.add,
+                                    color: Colors.blue, size: 25),
+                              ),
+                            ),
+                          ),
+                        )
+                      : SizedBox.shrink(), // Empty widget if not the "add story" item
+                ],
+              ),
             ),
           ),
-          SizedBox(height: 2), // Change to 2 from 4 had some overflow
-          Text('Username'),
+          // User name section with white background
+          Container(
+            width: 100, // Match the width of the story item
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Text(
+              widget.stories['id'] == "0"
+                  ? "Add Story"
+                  : (widget.stories['userName'] ?? 'User').toString(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

@@ -52,11 +52,13 @@ class _StoriesListState extends State<StoriesList> {
       setUserId: _userId,
     );
 
+    print("prof_image: ${prof_image}");
+
     final newStory = {
       "id": "0",
       "userId": _userId,
       "contentMediaType": "",
-      "contentMediaUrl": "",
+      "contentMediaUrl": _imageUrl,
       "contentText": _userName,
       "createdAt": "",
       "viewCount": 0,
@@ -73,6 +75,8 @@ class _StoriesListState extends State<StoriesList> {
       url: "/api/story/friends?includeOwn=true",
       method: "GET",
     );
+
+    print("STORY FETCH: ${responseData.body}");
 
     if (responseData.statusCode == 200) {
       final data = jsonDecode(responseData.body)['data'] == null
@@ -111,7 +115,7 @@ class _StoriesListState extends State<StoriesList> {
                     scrollDirection: Axis.horizontal,
                     itemCount: _stories.length,
                     itemBuilder: (context, index) {
-                      return StoryItem(stories: _stories[index]);
+                      return StoryItem(stories: _stories[index], allStories: _stories.cast<Map<String, dynamic>>());
                     },
                   ),
         ),

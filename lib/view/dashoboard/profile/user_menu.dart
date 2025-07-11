@@ -66,6 +66,7 @@ class _UserMenuState extends State<UserMenu> {
           IconButton(
             icon: Icon(Icons.settings, color: Colors.black),
             onPressed: () {
+              print("Click");
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => SettingsPrivacyPage()),
