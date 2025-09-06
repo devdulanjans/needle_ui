@@ -11,11 +11,17 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _displayName = TextEditingController();
+  final _firstName = TextEditingController();
+  final _lastName = TextEditingController();
+  final _dob = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+
+  DateTime? _selectedDate;
+  String? _selectedGender;
+  bool _isChecked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +66,90 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  Widget buildDatePickerField(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        DateTime? pickedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(1900),
+          lastDate: DateTime.now(),
+          builder: (BuildContext context, Widget? child) {
+            return Theme(
+              data: ThemeData.light().copyWith(
+                dialogBackgroundColor: Colors.red, // Set background color to red
+              ),
+              child: child!,
+            );
+          },
+        );
+        if (pickedDate != null) {
+          setState(() {
+            _selectedDate = pickedDate;
+            _dob.text = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day}";
+          });
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white12, // 🔴 Background color added here
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, color: Colors.white70),
+            SizedBox(width: 10),
+            Text(
+              _selectedDate != null
+                  ? "${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}"
+                  : 'Date Of Birth',
+              style: TextStyle(color: Colors.white,fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildGenderDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedGender,
+      decoration: InputDecoration(
+        labelText: 'Gender',
+        labelStyle: TextStyle(color: Colors.white),
+        prefixIcon: Icon(Icons.male, color: Colors.white70),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none, // ❌ No border
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none, // ❌ No border when focused
+        ),
+        filled: true, // ✅ Optional: adds background color if desired
+        fillColor: Colors.white12, // Optional background color
+      ),
+      style: TextStyle(color: Colors.black), // Set unselected text color to white
+      items: [
+        DropdownMenuItem(
+          value: 'M',
+          child: Text('Male', style: TextStyle(color: Colors.black),),
+
+        ),
+        DropdownMenuItem(
+          value: 'F',
+          child: Text('Female',  style: TextStyle(color: Colors.black)),
+        ),
+      ],
+      onChanged: (value) {
+        setState(() {
+          _selectedGender = value;
+        });
+      },
+    );
+  }
+
   Widget _buildProfilePicture() {
     return Stack(
       alignment: Alignment.bottomRight,
@@ -92,15 +182,28 @@ class _SignupScreenState extends State<SignupScreen> {
       key: _formKey,
       child: Column(
         children: [
+          SizedBox(height: 20),
           TextFormField(
-            controller: _displayName,
+            controller: _firstName,
             style: TextStyle(color: Colors.white),
             decoration: InputDecoration(
-              labelText: 'Display Name',
+              labelText: 'First Name',
               labelStyle: TextStyle(color: Colors.white),
               prefixIcon: Icon(Icons.person, color: Colors.white70),
             ),
           ),
+          SizedBox(height: 20),
+          TextFormField(
+            controller: _lastName,
+            style: TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: 'Last Name',
+              labelStyle: TextStyle(color: Colors.white),
+              prefixIcon: Icon(Icons.person, color: Colors.white70),
+            ),
+          ),
+          SizedBox(height: 20),
+          buildDatePickerField(context),
           SizedBox(height: 20),
           TextFormField(
             controller: _email,
@@ -110,6 +213,8 @@ class _SignupScreenState extends State<SignupScreen> {
               prefixIcon: Icon(Icons.email, color: Colors.white70),
             ),
           ),
+          SizedBox(height: 20),
+          buildGenderDropdown(),
           SizedBox(height: 20),
           TextFormField(
             controller: _password,
@@ -121,6 +226,23 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
           SizedBox(height: 30),
+          Row(
+            children: [
+              Checkbox(
+                value: _isChecked,
+                onChanged: (value) {
+                  setState(() {
+                    _isChecked = value!;
+                  });
+                },
+              ),
+              Text(
+                'I agree to the Terms and Conditions',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
               signupAction(context);
@@ -165,21 +287,52 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> signupAction(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
+      if (!_isChecked) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Error', style: TextStyle(color: Colors.black)),
+              content: Text('You must agree to the Terms and Conditions to proceed.', style: TextStyle(color: Colors.black)),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK', style: TextStyle(color: Colors.black)),
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
 
+      var displayName = _firstName.text + " " + _lastName.text;
+
       var bodyData = {
         "email": _email.text,
         "password": _password.text,
-        "displayName": _displayName.text,
+        "displayName": displayName,
+        "firstName":_firstName.text,
+        "lastName":_lastName.text,
+        "dob":_dob.text,
+        "gender":"1"
       };
+
+      print(bodyData);
       var responseData = await API_V1_call(
         url: "/api/account/signup",
         method: "POST",
         body: bodyData,
       );
+      // print("responseDecode: "+responseData.body.toString());
       var responseDecode = json.decode(responseData.body);
+      print(responseData);
 
       setState(() {
         _isLoading = false;

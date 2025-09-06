@@ -1,4 +1,4 @@
-package com.example.needle2
+package lk.needle.needleapp
 
 import io.flutter.embedding.android.FlutterActivity
 

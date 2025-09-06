@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../controller/api/api_controller.dart';
@@ -9,12 +9,12 @@ import '../../../controller/auth_controller.dart';
 import '../../main_screen.dart';
 import '../home_feed.dart';
 
-class CreatePostPage extends StatefulWidget {
+class CreateStoryPage extends StatefulWidget {
   @override
-  _CreatePostPageState createState() => _CreatePostPageState();
+  _CreateStoryPageState createState() => _CreateStoryPageState();
 }
 
-class _CreatePostPageState extends State<CreatePostPage> {
+class _CreateStoryPageState extends State<CreateStoryPage> {
   final TextEditingController _postController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = [];
@@ -26,7 +26,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create Post', style: TextStyle(color: Colors.black)),
+        title: Text('Create Story', style: TextStyle(color: Colors.black)),
         leading: IconButton(
           icon: Icon(Icons.navigate_before_sharp, color: Colors.black),
           onPressed: _backNavigator,
@@ -139,29 +139,29 @@ class _CreatePostPageState extends State<CreatePostPage> {
         itemCount: _selectedImages.length,
         itemBuilder:
             (context, index) => Stack(
-              children: [
-                Image.file(
-                  File(_selectedImages[index].path),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: GestureDetector(
-                    onTap: () => _removeImage(index),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.close, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ),
-              ],
+          children: [
+            Image.file(
+              File(_selectedImages[index].path),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: () => _removeImage(index),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -175,7 +175,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
           _buildAttachmentButton(
             icon: Icons.photo_library,
             label: 'Photo/Video',
-            onPressed: _pickImages,
+            onPressed: _selectedImages.isEmpty ? () => _pickImages() : (){}, // Disable if an image is already selected
           ),
         ],
       ),
@@ -204,16 +204,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Future<void> _pickImages() async {
-    final List<XFile>? images = await _picker.pickMultiImage();
-    if (images != null) {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
       setState(() {
-        _selectedImages.addAll(images);
-        if (_selectedImages.length > 10) {
-          _selectedImages = _selectedImages.sublist(0, 10);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Maximum 10 images allowed')));
-        }
+        _selectedImages = [image]; // Replace the list with the single selected image
       });
     }
   }
@@ -234,6 +228,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       isLoading = true;
     });
     List<String> imagePaths = _selectedImages.map((file) => file.path).toList();
+    var getImagePaths = _selectedImages;
 
     List<String> imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
     List<String> videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'flv', 'wmv'];
@@ -252,18 +247,22 @@ class _CreatePostPageState extends State<CreatePostPage> {
     String? userId = await getUserId();
 
     var bodyData = {
-      'content': _postController.text,
+      'contentText': _postController.text,
+      "contentMediaType":"IMAGE",
       'visibility': _selectedValue,
       'creatorId':userId
     };
 
-    var responseData = await API_V1_Multipart_call(
-      method: "POST",
-      url: "/api/post",
-      filePaths: imagePaths,
-      body: bodyData,
-      isHeader: true,
-      mediaTypes: mediaType
+    print("bodyData: $bodyData");
+    print("mediaType: $mediaType");
+
+    var responseData = await API_V1_Multipart_call_Story(
+        method: "POST",
+        url: "/api/story",
+        filePaths: _selectedImages[0].path,
+        body: bodyData,
+        isHeader: true,
+        mediaTypes: mediaType[0].toString() // Assuming you want to send the first media type
     );
 
     var allResponseData = jsonDecode(responseData);
@@ -271,7 +270,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
       isLoading = false;
     });
 
-    if (allResponseData['message'] == "Post created successfully") {
+    print("allResponseData: $allResponseData");
+
+    if (allResponseData['message'] == "story created successfully") {
       showDialog(
         context: context,
         builder: (BuildContext context) {

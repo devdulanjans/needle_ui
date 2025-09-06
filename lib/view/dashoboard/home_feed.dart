@@ -6,13 +6,15 @@ import '../../controller/api/api_controller.dart';
 import '../../controller/auth_controller.dart';
 import '../../controller/config/image_path_setter.dart';
 import '../../model/logged_user_profile_model.dart';
+import '../global_search.dart';
 import 'post/create_post_2.dart';
 import 'post_card.dart';
 import 'profile/profile.dart';
-import 'profile/user_profile.dart';
-import 'story.dart';
+import 'story/story.dart';
 
 class HomeFeed extends StatefulWidget {
+  final bool refreshStories;
+  const HomeFeed({super.key, this.refreshStories = false});
   @override
   _HomeFeedState createState() => _HomeFeedState();
 }
@@ -23,12 +25,19 @@ class _HomeFeedState extends State<HomeFeed> {
   String _searchQuery = '';
   List<dynamic> _allPostData = [];
   String _profileImage = "";
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 0;
+  bool _isFetchingMore = false;
 
   @override
   void initState() {
     super.initState();
-    _getAllPost();
+    _getAllPost(page: _currentPage);
     profileData();
+    // if (widget.refreshStories) {
+    //   // Call your story fetching function here, for example:
+    //   // _fetchStories();
+    // }
   }
 
   Future<void> _search(String query) async {
@@ -90,22 +99,74 @@ class _HomeFeedState extends State<HomeFeed> {
 
   }
 
-  Future<void> _getAllPost() async {
+  Future<void> _getAllPost({int page = 0, int limit = 30}) async {
+    print("SCROLLING");
+    if (_isFetchingMore) return;
+    setState(() {
+      _isFetchingMore = true;
+    });
+
     var responseData = await API_V1_call(
-      url: "/api/post/all?page=0&limit=30",
+      url: "/api/post/all?page=$page&limit=$limit",
       method: "GET",
     );
 
     if (responseData.statusCode == 200) {
-      final data = (jsonDecode(responseData.body)['data']['posts'] as List).reversed.toList();
+      var data = [];
+
+      final posts = jsonDecode(responseData.body)['data']['posts'];
+      print("123 - Posts data: $posts");
+      if (posts != null) {
+        data = (posts as List);
+        data.shuffle();
+
+        print("00-123 - Posts data: $posts");
+      } else {
+        print('Posts data is null');
+      }
+
       setState(() {
-        _allPostData = data;
+        if (page == 0) {
+          _allPostData = data;
+        } else {
+          _allPostData.addAll(data);
+        }
+        _currentPage = page;
+        _isFetchingMore = false;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching posts')),
       );
+      setState(() {
+        _isFetchingMore = false;
+      });
     }
+  }
+
+  void removeElement(int index) {
+    print("11223 - REMOVE SELECTED ITEM: $index");
+    setState(() {
+      _allPostData.removeAt(index);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+              _scrollController.position.maxScrollExtent &&
+          !_isFetchingMore) {
+        _getAllPost(page: _currentPage + 1);
+      }
+    });
   }
 
   @override
@@ -129,7 +190,7 @@ class _HomeFeedState extends State<HomeFeed> {
                 icon: Icon(Icons.search,
                     color: Theme.of(context).colorScheme.primary),
                 onPressed: () async {
-                  // Open search and reset after it's popped
+                 // Open search and reset after it's popped
                   await showSearch(
                     context: context,
                     delegate: DataSearch(search: _search),
@@ -142,10 +203,10 @@ class _HomeFeedState extends State<HomeFeed> {
               ),
             ],
           ),
-          Divider(height: 1, color: Colors.black12),
+          // Divider(height: 1, color: Colors.black12),
           Container(
-            height: 50,
-            margin: EdgeInsets.symmetric(vertical: 10),
+            height: 40,
+            margin: EdgeInsets.only(top: 0, bottom: 10),
             color: Colors.white,
             child: Center(
               child: ListTile(
@@ -157,15 +218,13 @@ class _HomeFeedState extends State<HomeFeed> {
                 trailing: IconButton(
                   icon: Icon(Icons.image,
                       color: Theme.of(context).colorScheme.primary),
-                  onPressed: () async {
-                    await showSearch(
-                      context: context,
-                      delegate: DataSearch(search: _search),
+                  onPressed: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CreatePostPage(),
+                      ),
                     );
-                    setState(() {
-                      _searchResults = [];
-                      _searchQuery = '';
-                    });
                   },
                 ),
                 title: GestureDetector(
@@ -181,27 +240,38 @@ class _HomeFeedState extends State<HomeFeed> {
                     "What's on your mind?",
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
+                      fontSize: 13
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          Divider(height: 3, color: Colors.black12),
+          Divider(height: 10, color: Colors.black12,thickness: 3,),
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator())
-                : CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: StoriesList()),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) =>
-                        PostCard(_allPostData[index]),
-                    childCount: _allPostData.length,
+                : NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scrollInfo) {
+                if (!_isFetchingMore &&
+                    scrollInfo.metrics.pixels ==
+                        scrollInfo.metrics.maxScrollExtent) {
+                  _getAllPost(page: _currentPage + 1);
+                  return true;
+                }
+                return false;
+              },
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverToBoxAdapter(child: StoriesList()),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                        (context, index) => PostCard(_allPostData[index],onPostDeleted: () => removeElement(index)),
+                        childCount: _allPostData.length),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -210,145 +280,4 @@ class _HomeFeedState extends State<HomeFeed> {
   }
 }
 
-class DataSearch extends SearchDelegate<String> {
-  final Function(String) search;
-  Timer? _debounce;
-  List<LoggedUserProfile?> _results = [];
-  bool _isSearching = false;
 
-  DataSearch({required this.search});
-
-  void _performSearch(String query, BuildContext context) async {
-    _results.clear();
-    _isSearching = true;
-    showSuggestions(context);
-
-    try {
-      final response = await API_V1_call(
-        url: "/api/user/search?searchKeyword=$query",
-        method: "GET",
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body)['data'] as List;
-        _results = data.map((item) => LoggedUserProfile.fromJson(item)).toList();
-      }
-    } catch (e) {
-      print("Search error: $e");
-    }
-
-    _isSearching = false;
-    showResults(context);
-  }
-
-  @override
-  List<Widget> buildActions(BuildContext context) => [
-    IconButton(
-      icon: Icon(Icons.clear),
-      onPressed: () {
-        query = '';
-        _results.clear();
-        showSuggestions(context);
-      },
-    ),
-  ];
-
-  @override
-  Widget buildLeading(BuildContext context) => IconButton(
-    icon: AnimatedIcon(
-        icon: AnimatedIcons.menu_arrow, progress: transitionAnimation),
-    onPressed: () {
-      close(context, '');
-    },
-  );
-
-  @override
-  Widget buildResults(BuildContext context) {
-    if (query.isEmpty) {
-      return Center(child: Text("Type something to search..."));
-    }
-
-    if (_results.isEmpty && !_isSearching) {
-      return Center(child: Text('No results found for "$query"'));
-    }
-
-    return ListView.builder(
-      itemCount: _results.length,
-      itemBuilder: (context, index) {
-        return GestureDetector(
-          onTap: (){
-            // Navigator.of(context).push(
-            //   MaterialPageRoute(
-            //     builder: (context) => ProfileScreen(
-            //         userProfile: _results[index]
-            //     ),
-            //   ),
-            // );
-          },
-          child: ListTile(
-            leading: CircleAvatar(
-              radius: 40,
-              backgroundImage: (_results[index]?.profilePicture != null && _results[index]!.profilePicture!.isNotEmpty)
-                  ? CachedNetworkImageProvider(
-                      imagePathSetter(
-                        imageName: _results[index]?.profilePicture,
-                        imageSize: "THUMBNAIL",
-                        requestingImageType: "PROFILE",
-                        setUserId: _results[index]?.id.toString(),
-                      ),
-                    )
-                  : AssetImage("assets/profile_images.png") as ImageProvider,
-            ),
-            title: Text(
-              _results[index]?.displayName ?? 'No Name',
-              style: TextStyle(color: Colors.black)
-            ),
-            subtitle: Text(_results[index]?.email ?? 'No Email',
-                style: TextStyle(color: Colors.black)),
-            trailing: IconButton.outlined(
-                onPressed: (){
-                  print("_results[index]: ${_results[index]}");
-                  // Navigator.of(context).push(
-                  //   MaterialPageRoute(
-                  //     builder: (context) => ProfileScreen(
-                  //       userProfile: _results[index]
-                  //     ),
-                  //   ),
-                  // );
-                },
-                icon: Icon(Icons.menu, color: Colors.black,)
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-
-    _debounce = Timer(Duration(milliseconds: 300), () {
-      if (query.isNotEmpty) {
-        _performSearch(query, context);
-      } else {
-        _results.clear();
-        showSuggestions(context);
-      }
-    });
-
-    return Center(
-      child: _isSearching
-          ? CircularProgressIndicator()
-          : Text(query.isEmpty
-          ? 'Search for something...'
-          : 'Searching "$query"...'),
-    );
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
-  }
-}

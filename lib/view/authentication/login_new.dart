@@ -6,6 +6,8 @@ import 'package:needle2/controller/auth_controller.dart';
 import '../../controller/api/api_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'forgot_password.dart';
+
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -13,8 +15,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'pirunthaparasuram@gmail.com');
-  final _passwordController = TextEditingController(text: '123456789');
+  final _emailController = TextEditingController(); //text: 'pirunthaparasuram@gmail.com'
+  final _passwordController = TextEditingController(); //text: '123456789'
   bool _obscurePassword = true;
   bool _isLoading = false;
 
@@ -44,6 +46,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildForm(context),
                 SizedBox(height: 30),
                 _buildSocialLogin(context),
+                SizedBox(height: 100),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     Text("Powered By", style: TextStyle(color: Colors.white70,fontSize: 10)),
+                //     SizedBox(width: 10),
+                //     Image.asset("assets/org_logo.png",width: 40,)
+                //   ],
+                // ),
               ],
             ),
           ),
@@ -118,7 +129,14 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ):CircularProgressIndicator(),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              // _resetPassword();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ForgotPassword(),
+                ),
+              );
+            },
             child: Text('Forgot Password?', style: TextStyle(color: Colors.white70)),
           ),
           SizedBox(height: 20),
@@ -135,9 +153,51 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
+
         ],
       ),
     );
+  }
+
+  Future _resetPassword() async {
+    String? email;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Send'),
+            ),
+          ],
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Enter your email', style: TextStyle(color: Colors.black),),
+              const SizedBox(height: 20),
+              TextFormField(
+                onChanged: (value) {
+                  email = value;
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (email != null) {
+      // try {
+      //   await auth.sendPasswordResetEmail(email: email!);
+      //   ScaffoldSnackbar.of(context).show('Password reset email is sent');
+      // } catch (e) {
+      //   ScaffoldSnackbar.of(context).show('Error resetting');
+      // }
+    }
   }
 
   // Future<void> loginAction(BuildContext context) async {
@@ -198,7 +258,8 @@ class _LoginScreenState extends State<LoginScreen> {
           displayName: responseDecode['data']['displayName'].toString(),
           mobileNo: responseDecode['data']['mobileNo'].toString(),
           profilePicture: responseDecode['data']['profilePicture'].toString(),
-          coverImage: responseDecode['data']['coverImage'].toString()
+          coverImage: responseDecode['data']['coverImage'].toString(),
+          rTokenExpDate: getExpiryTimeString()
         );
 
         Navigator.pushNamed(context, '/main');

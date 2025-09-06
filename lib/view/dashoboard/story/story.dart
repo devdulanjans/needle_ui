@@ -1,28 +1,12 @@
-// import 'package:flutter/material.dart';
-//
-// import 'widget/story_item_widget.dart';
-//
-// class StoriesList extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return SizedBox(
-//       height: 250,
-//       child: ListView.builder(
-//         scrollDirection: Axis.horizontal,
-//         itemCount: 10,
-//         itemBuilder: (context, index) => StoryItem(imageUrl: "https://randomuser.me/api/portraits/women/${45 + 1}.jpg"),
-//       ),
-//     );
-//   }
-// }
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../../controller/api/api_controller.dart';
-import 'widget/empty_story_widget.dart';
-import 'widget/story_item_widget.dart';
+import '../../../controller/api/api_controller.dart';
+import '../../../controller/auth_controller.dart';
+import '../../../controller/config/image_path_setter.dart';
+import '../widget/empty_story_widget.dart';
+import '../widget/story_item_widget.dart';
 
 class StoriesList extends StatefulWidget {
   @override
@@ -56,16 +40,30 @@ class _StoriesListState extends State<StoriesList> {
   }
 
   Future<void> _fetchStories() async {
+
+    var _userName = await getUserName();
+    var _userId = await getUserId();
+    var _imageUrl = await getUserProfilePicture();
+
+    var prof_image= imagePathSetter(
+      imageName: _imageUrl,
+      imageSize: "THUMBNAIL",
+      requestingImageType: "PROFILE",
+      setUserId: _userId,
+    );
+
+    print("prof_image: ${prof_image}");
+
     final newStory = {
       "id": "0",
-      "userId": "",
+      "userId": _userId,
       "contentMediaType": "",
-      "contentMediaUrl": "",
-      "contentText": "Car Race",
-      "createdAt": "2025-04-07T06:07:38.208623Z",
+      "contentMediaUrl": _imageUrl,
+      "contentText": _userName,
+      "createdAt": "",
       "viewCount": 0,
-      "displayName": "Parasuram",
-      "profileUrl": "",
+      "displayName": _userName,
+      "profileUrl": prof_image,
     };
 
     // Add the object to the _stories list
@@ -78,18 +76,18 @@ class _StoriesListState extends State<StoriesList> {
       method: "GET",
     );
 
-    print('asd - Response: ${responseData.statusCode}');
-    print('asd - Response: ${responseData.body}');
+    print("STORY FETCH: ${responseData.body}");
 
     if (responseData.statusCode == 200) {
       final data = jsonDecode(responseData.body)['data'] == null
           ? []
           : jsonDecode(responseData.body)['data'];
-      print(responseData);
+
       setState(() {
         _stories.addAll(data);
         _isLoading = false;
       });
+
     } else {
       // Handle error
       setState(() {
@@ -106,18 +104,19 @@ class _StoriesListState extends State<StoriesList> {
     return Column(
       children: [
         SizedBox(
-          height: 200,
+          height: 180,
           child:
               _isLoading
                   ? Center(child: CircularProgressIndicator())
                   : _stories.isEmpty
                   ? EmptyStoryWidget()
                   : ListView.builder(
-                    controller: _scrollController,
+                    // controller: _scrollController,
                     scrollDirection: Axis.horizontal,
                     itemCount: _stories.length,
+
                     itemBuilder: (context, index) {
-                      return StoryItem(stories: _stories[index]);
+                      return StoryItem(stories: _stories[index], allStories: _stories.cast<Map<String, dynamic>>());
                     },
                   ),
         ),
