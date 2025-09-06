@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../controller/auth_controller.dart';
 import '../../../controller/config/image_path_setter.dart';
+
 // import '../../post/widgets/post_full_screen_image_view.dart';
 import '../story/create_story.dart';
 import '../story/story_view.dart';
@@ -52,7 +53,7 @@ class _StoryItemState extends State<StoryItem> {
   Widget build(BuildContext context) {
     print(widget.stories);
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(4.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -63,7 +64,8 @@ class _StoryItemState extends State<StoryItem> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => StoryDetailsPage(
+                    builder:
+                        (context) => StoryDetailsPage(
                       stories: widget.allStories,
                       initialIndex: widget.stories['id'],
                     ),
@@ -78,25 +80,27 @@ class _StoryItemState extends State<StoryItem> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 image: DecorationImage(
-                  image: widget.stories['contentMediaUrl'] != null &&
-                          widget.stories['contentMediaUrl'].isNotEmpty
+                  image:
+                  widget.stories['contentMediaUrl'] != null &&
+                      widget.stories['contentMediaUrl'].isNotEmpty
                       ? CachedNetworkImageProvider(
-                          widget.stories['id'] == "0" &&
-                                  widget.stories['profileUrl'] != null &&
-                                  widget.stories['profileUrl'].isNotEmpty
-                              ? widget.stories['profileUrl']
-                              : imagePathSetter(
-                                  imageName: widget.stories['contentMediaUrl'],
-                                  imageSize: "THUMBNAIL",
-                                  requestingImageType: "STORY",
-                                  // Assuming "STORY" is the correct type for stories
-                                  setUserId: widget.stories['userId'] != null
-                                      ? widget.stories['userId'].toString()
-                                      : "0", // Provide a default or handle null userId
-                                ),
-                        )
+                    widget.stories['id'] == "0" &&
+                        widget.stories['profileUrl'] != null &&
+                        widget.stories['profileUrl'].isNotEmpty
+                        ? widget.stories['profileUrl']
+                        : imagePathSetter(
+                      imageName: widget.stories['contentMediaUrl'],
+                      imageSize: "THUMBNAIL",
+                      requestingImageType: "STORY",
+                      // Assuming "STORY" is the correct type for stories
+                      setUserId:
+                      widget.stories['userId'] != null
+                          ? widget.stories['userId'].toString()
+                          : "0", // Provide a default or handle null userId
+                    ),
+                  )
                       : AssetImage("assets/profile_images.png")
-                          as ImageProvider, // Cast to ImageProvider
+                  as ImageProvider, // Cast to ImageProvider
                   fit: BoxFit.cover,
                 ),
               ),
@@ -118,7 +122,8 @@ class _StoryItemState extends State<StoryItem> {
                             imageName: widget.stories['profileUrl'],
                             imageSize: "THUMBNAIL",
                             requestingImageType: "PROFILE",
-                            setUserId: widget.stories['userId'] != null
+                            setUserId:
+                            widget.stories['userId'] != null
                                 ? widget.stories['userId'].toString()
                                 : "0",
                           ),
@@ -130,34 +135,81 @@ class _StoryItemState extends State<StoryItem> {
                   // Add story icon for the first item
                   widget.stories['id'] == "0"
                       ? Positioned(
-                          top: 0,
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => CreateStoryPage(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                padding: EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.8),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: Colors.black26, width: 1),
-                                ),
-                                child: Icon(Icons.add,
-                                    color: Colors.blue, size: 25),
-                              ),
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => CreateStoryPage(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.8),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.black26,
+                              width: 1,
                             ),
                           ),
-                        )
-                      : SizedBox.shrink(), // Empty widget if not the "add story" item
+                          child: Icon(
+                            Icons.add,
+                            color: Colors.blue,
+                            size: 25,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                      : SizedBox.shrink(),
+                  // Empty widget if not the "add story" item
+                  // Positioned(
+                  //   top: 5,
+                  //   right: 5,
+                  //   child: Container(
+                  //     padding: EdgeInsets.all(2),
+                  //     decoration: BoxDecoration(
+                  //       shape: BoxShape.circle,
+                  //       border: Border.all(
+                  //         color: Colors.purple, // Border color
+                  //         width: 3.0,         // Border width
+                  //       ),
+                  //     ),
+                  //     child: CircleAvatar(
+                  //       radius: 15,
+                  //       foregroundColor: Colors.purple,
+                  //       backgroundImage:  widget.stories['profileUrl'] != null &&
+                  //           widget.stories['profileUrl'].isNotEmpty ? NetworkImage(
+                  //           widget.stories['profileUrl']
+                  //       ):AssetImage("assets/profile_images.png"),
+                  //       backgroundColor: Colors.grey[300], // Placeholder color
+                  //     ),
+                  //   ),
+                  // ),
+                  Positioned(
+                    bottom: 5,
+                    left: 5,
+                    child: Text(
+                      widget.stories['displayName'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(2.0, 1.0), // Position of the shadow
+                            blurRadius: 3.0, // Blur effect of the shadow
+                            color: Colors.black, // Shadow color
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -172,10 +224,7 @@ class _StoryItemState extends State<StoryItem> {
                   ? "Add Story"
                   : (widget.stories['userName'] ?? 'User').toString(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               overflow: TextOverflow.ellipsis,
             ),
           ),

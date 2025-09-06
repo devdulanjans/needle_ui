@@ -8,6 +8,8 @@ import 'view/dashoboard/profile/profile.dart';
 import 'view/main_screen.dart';
 import 'view/theme/customThemeData.dart';
 import 'view/theme/splash.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 
 void main() => runApp(MyApp());
 
@@ -23,7 +25,26 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _autoLoginFuture = tryAutoLogin();
+    _requestPermissions();
+  }
 
+  Future<void> _requestPermissions() async {
+    // Check and request permissions
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.camera,
+      Permission.photos,
+      Permission.contacts,
+    ].request();
+
+    statuses.forEach((permission, status) {
+      if (status.isDenied) {
+        print('$permission is denied.');
+      } else if (status.isPermanentlyDenied) {
+        print('$permission is permanently denied. Please enable it in settings.');
+      } else {
+        print('$permission is granted.');
+      }
+    });
   }
 
   @override

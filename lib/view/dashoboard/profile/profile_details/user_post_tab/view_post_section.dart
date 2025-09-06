@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../widget/common_seperator.dart';
 import 'user_defined_post.dart';
@@ -28,7 +29,7 @@ class _ViewPostDetailsState extends State<ViewPostDetails> {
               color: Colors.black
             ),
           ),
-          SizedBox(height: 10),
+          SizedBox(height: 20),
           Column(
             children: [
               Row(
@@ -38,7 +39,7 @@ class _ViewPostDetailsState extends State<ViewPostDetails> {
                   SizedBox(width: 10,),
                   Text(
                     "Profile. ",
-                    style: TextStyle(fontSize: 16,color: Colors.black,fontWeight: FontWeight.bold),
+                    style: GoogleFonts.poppins(fontSize: 16,color: Colors.black,fontWeight: FontWeight.bold),
                   ),
                   Text(
                     "Entrepreneur",
@@ -46,7 +47,7 @@ class _ViewPostDetailsState extends State<ViewPostDetails> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 20),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -62,7 +63,7 @@ class _ViewPostDetailsState extends State<ViewPostDetails> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 20),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,8 +75,9 @@ class _ViewPostDetailsState extends State<ViewPostDetails> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 20),
               Separator(),
+              SizedBox(height: 20),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

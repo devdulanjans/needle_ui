@@ -1,20 +1,27 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../controller/actions/comment_action_controller.dart';
 import '../../controller/api/api_controller.dart';
+import '../../controller/auth_controller.dart';
 import '../../controller/config/image_path_setter.dart';
 import '../widget/expandableText.dart';
 import 'post/full_screenImage.dart';
 import 'profile/profile.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> wallPost;
+  final VoidCallback? onPostDeleted;
 
-  PostCard(this.wallPost);
+
+  PostCard(this.wallPost, {this.onPostDeleted});
 
   @override
   _PostCardState createState() => _PostCardState();
@@ -28,13 +35,19 @@ class _PostCardState extends State<PostCard> {
   List<dynamic> comments = [];
   List<dynamic> postLikes = [];
 
+  String loggedUserId = "";
+
   @override
   void initState() {
     super.initState();
+    print(
+      "widget.wallPost['wallId'].toString(): ${widget.wallPost}",
+    );
     _getComments(widget.wallPost['wallId'].toString());
     _getLikesOfPost();
     likeCount = widget.wallPost['likeCount'] ?? 0;
     isLiked = widget.wallPost['isLiked'] ?? false;
+    pickLoggedUser();
     print("widget.wallPost: ${widget.wallPost}");
   }
 
@@ -42,6 +55,10 @@ class _PostCardState extends State<PostCard> {
   void dispose() {
     _commentController.dispose();
     super.dispose();
+  }
+
+  Future<void> pickLoggedUser() async{
+    loggedUserId = (await getUserId())!;
   }
 
   void _likePost() async {
@@ -123,10 +140,14 @@ class _PostCardState extends State<PostCard> {
       method: "POST",
     );
 
+    print("response.body: ${response.body}");
+
     if (response.statusCode == 200) {
       var data = [];
 
       final posts = jsonDecode(response.body)['data'];
+
+      print("Comments of posts: $posts");
 
       if (posts != null) {
         data = (posts as List).reversed.toList();
@@ -156,6 +177,9 @@ class _PostCardState extends State<PostCard> {
       method: "GET",
     );
 
+    print("REP post Id: ${[postId]}");
+    print("API CALL: /api/post/comment/${postId}");
+
     print("response.statusCode: ${response.statusCode}");
     print("Comment response.statusCode: ${response.body}");
 
@@ -164,6 +188,7 @@ class _PostCardState extends State<PostCard> {
         comments = jsonDecode(response.body)['data'] ?? [];
       });
     }
+    print("response.statusCode comments: ${response.statusCode}");
     if (response.statusCode == 200) {
       // ScaffoldMessenger.of(context).showSnackBar(
       //   SnackBar(backgroundColor: Colors.purpleAccent ,content: Text('Commented on the post',style: TextStyle(color: Colors.white),)),
@@ -173,7 +198,7 @@ class _PostCardState extends State<PostCard> {
         SnackBar(
           backgroundColor: Colors.red,
           content: Text(
-            'Error Comment ',
+            'Error Comment DC',
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -243,6 +268,7 @@ class _PostCardState extends State<PostCard> {
         builder:
             (context) => ProfileScreen(
               userId: widget.wallPost['userId'].toString(),
+              profileType: widget.wallPost['profileType'],
             ),
       ),
     );
@@ -274,9 +300,20 @@ class _PostCardState extends State<PostCard> {
                     child:
                         comments.isEmpty
                             ? Center(
-                              child: Text(
-                                'No comments yet.',
-                                style: TextStyle(color: Colors.black),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.comment_bank,
+                                    color: Colors.black12,
+                                    size: 100,
+                                  ),
+                                  Text(
+                                    'No comments yet.',
+                                    style: TextStyle(color: Colors.black),
+                                  ),
+                                ],
                               ),
                             )
                             : ListView.builder(
@@ -289,83 +326,121 @@ class _PostCardState extends State<PostCard> {
                                 );
                                 final String commentFormattedDate = timeago
                                     .format(commentDate);
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.purpleAccent.withAlpha(30),
-                                    // Background color
-                                    borderRadius: BorderRadius.circular(
-                                      12,
-                                    ), // Curved corners
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundImage:
+                                        comment['profilePicture'] != null
+                                            ? CachedNetworkImageProvider(
+                                              imagePathSetter(
+                                                imageName:
+                                                    comment['profilePicture'],
+                                                imageSize: "MEDIUM",
+                                                requestingImageType: "PROFILE",
+                                                setUserId:
+                                                    comment['creatorId']
+                                                        .toString(),
+                                              ),
+                                            )
+                                            : AssetImage(
+                                                  'assets/profile_images.png',
+                                                )
+                                                as ImageProvider,
                                   ),
-                                  margin: EdgeInsets.symmetric(vertical: 4),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundImage:
-                                          comment['userProfileImage'] != null
-                                              ? CachedNetworkImageProvider(
-                                                imagePathSetter(
-                                                  imageName:
-                                                      comment['userProfileImage'],
-                                                  imageSize: "MEDIUM",
-                                                  requestingImageType:
-                                                      "PROFILE",
-                                                  setUserId:
-                                                      comment['userId']
-                                                          .toString(),
+                                  title: InkWell(
+                                    onLongPress: () {
+                                      print("comment: ${comment}");
+                                      // return;
+                                      CommentActionController
+                                          .showCommentOptions(
+                                        context,
+                                        comment['content'],
+                                        comment['creatorId'].toString(),
+                                        comment['id'].toString(),
+                                        () {
+                                          _getComments(
+                                            widget.wallPost['wallId']
+                                                .toString(),
+                                          );
+                                        },
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.purpleAccent.withAlpha(30),
+                                        // Background color
+                                        borderRadius: BorderRadius.circular(
+                                          12,
+                                        ), // Curved corners
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {
+                                              // Navigate to profile screen
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (context) => ProfileScreen(
+                                                        userId:
+                                                            comment['creatorId']
+                                                                .toString(),
+                                                        profileType:
+                                                            comment['profileType'],
+                                                      ),
                                                 ),
-                                              )
-                                              : AssetImage(
-                                                    'assets/profile_images.png',
-                                                  )
-                                                  as ImageProvider,
-                                    ),
-                                    title: Text(
-                                      comment['userName'] ?? 'Unknown User',
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                    subtitle: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          comment['content'] ?? '',
-                                          style: GoogleFonts.poppins(color: Colors.black,fontSize: 16),
-                                        ),
-                                        Row(
-                                          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              commentFormattedDate,
+                                              );
+                                            },
+                                            child: Text(
+                                              comment['displayName'] ??
+                                                  'Unknown User',
                                               style: TextStyle(
                                                 color: Colors.black,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                            SizedBox(width: 10),
-                                            Icon(
-                                              Icons.thumb_up,
+                                          ),
+                                          Text(
+                                            comment['content'] ?? '',
+                                            style: GoogleFonts.poppins(
                                               color: Colors.black,
-                                              size: 13,
+                                              fontSize: 14,
                                             ),
-                                            SizedBox(width: 10),
-                                            GestureDetector(
-                                              onTap: () {
-                                                // Handle reply action
-                                                print("Reply to comment");
-                                                // You can implement reply functionality here
-                                              },
-                                              child: Text(
-                                                "Reply",
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
+                                  ),
+                                  subtitle: Row(
+                                    // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        commentFormattedDate,
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Text(
+                                        "Like",
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      SizedBox(width: 15),
+                                      GestureDetector(
+                                        onTap: () {
+                                          // Handle reply action
+                                          print("Reply to comment");
+                                          // You can implement reply functionality here
+                                        },
+                                        child: Text(
+                                          "Reply",
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
@@ -553,6 +628,59 @@ class _PostCardState extends State<PostCard> {
     );
   }
 
+  void savePost() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Retrieve the existing list of saved posts
+    final String? savedPostsJson = prefs.getString('savedPosts');
+    List<dynamic> savedPosts = savedPostsJson != null ? jsonDecode(savedPostsJson) : [];
+
+    // Check if the new post already exists in the list
+    if (!savedPosts.any((post) => mapEquals(post, widget.wallPost))) {
+      savedPosts.add(widget.wallPost); // Add the new post if it's not a duplicate
+      await prefs.setString('savedPosts', jsonEncode(savedPosts)); // Save the updated list
+      print("Post added and saved locally: ${widget.wallPost}");
+    } else {
+      print("Duplicate post. Not saved.");
+    }
+  }
+
+  void removePost() async {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Confirm Delete",style: TextStyle(color: Colors.black)),
+          backgroundColor: Colors.white,
+          content: Text("Are you sure you want to delete this post?", style: TextStyle(color: Colors.black)),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: Text("OK", style: TextStyle(color: Colors.red),),
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close the dialog
+                final response = await API_V1_call(
+                  url: "/api/post/${widget.wallPost['wallId'].toString()}",
+                  method: "DELETE",
+                );
+                print("REMOVE RESPONSE: ${response.body}");
+                if (response.statusCode == 200 && widget.onPostDeleted != null) {
+                  widget.onPostDeleted!();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildShareIcon(IconData icon, String label, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
@@ -666,7 +794,7 @@ class _PostCardState extends State<PostCard> {
                               print("Not Interested selected");
                             },
                           ),
-                          Divider(),
+                          // Divider(),
                           // Section 2
                           ListTile(
                             title: Text(
@@ -675,10 +803,24 @@ class _PostCardState extends State<PostCard> {
                             ),
                             leading: Icon(Icons.save_alt, color: Colors.black),
                             onTap: () {
+                              savePost();
                               Navigator.pop(context);
                               print("Save Link selected");
                             },
                           ),
+                          loggedUserId == widget.wallPost['userId'].toString() ? ListTile(
+                            title: Text(
+                              "Move To Bin",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            leading: Icon(Icons.remove_circle, color: Colors.black),
+                            onTap: () {
+                              removePost();
+                              // It's generally better to pop the navigator *after* the async operation if it depends on the context,
+                              // but since showDialog creates a new route, popping it here is fine.
+                              // Navigator.pop(context);
+                            },
+                          ):SizedBox(height: 0,),
                           ListTile(
                             title: Text(
                               "Hide ad",
@@ -899,7 +1041,11 @@ class _PostCardState extends State<PostCard> {
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       onPressed: () {
-                        _showShareBottomSheet(context);
+                        print("this.");
+                        SharePlus.instance.share(
+                            ShareParams(text: 'check out my website https://example.com')
+                        );
+                        // _showShareBottomSheet(context);
                       },
                     ),
                     Text("Share", style: TextStyle(color: Colors.black)),

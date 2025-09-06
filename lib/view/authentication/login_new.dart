@@ -46,6 +46,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildForm(context),
                 SizedBox(height: 30),
                 _buildSocialLogin(context),
+                SizedBox(height: 100),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     Text("Powered By", style: TextStyle(color: Colors.white70,fontSize: 10)),
+                //     SizedBox(width: 10),
+                //     Image.asset("assets/org_logo.png",width: 40,)
+                //   ],
+                // ),
               ],
             ),
           ),
@@ -144,6 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
+
         ],
       ),
     );

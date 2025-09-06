@@ -112,12 +112,12 @@ class _StoryDetailsPageState extends State<StoryDetailsPage> {
             itemCount: widget.stories.length,
             itemBuilder: (context, index) {
               final story = widget.stories[index];
-              return GestureDetector(
-                onTapDown: (_) => _pauseTimer(), // Pause timer on single tap
-                onTapUp: (_) => _resumeTimer(), // Resume timer after untap
-                onTapCancel: () => _resumeTimer(), // Resume timer if tap is canceled
-                onLongPressStart: (_) => _pauseTimer(), // Pause timer on long press
-                onLongPressEnd: (_) => _resumeTimer(), // Resume timer after long press ends
+              return GestureDetector( // This GestureDetector is consuming the tap events
+                // onTapDown: (_) => _pauseTimer(), // Pause timer on single tap
+                // onTapUp: (_) => _resumeTimer(), // Resume timer after untap
+                // onTapCancel: () => _resumeTimer(), // Resume timer if tap is canceled
+                // onLongPressStart: (_) => _pauseTimer(), // Pause timer on long press
+                // onLongPressEnd: (_) => _resumeTimer(), // Resume timer after long press ends
                 child: Stack(
                   children: [
                     Container(
@@ -143,15 +143,41 @@ class _StoryDetailsPageState extends State<StoryDetailsPage> {
                       ),
                     ),
                     Positioned(
-                      top: 40,
-                      left: 16,
+                      top: 50,
+                      right: 30,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white, // Border color
+                            width: 2.0,         // Border width
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 20,
+                          foregroundColor: Colors.purple,
+                          backgroundImage: AssetImage("assets/profile_images.png") as ImageProvider,
+                          backgroundColor: Colors.grey[300], // Placeholder color
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 50,
+                      left: 70,
                       right: 16,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: Icon(Icons.close, color: Colors.white),
-                            onPressed: () => Navigator.pop(context),
+                          GestureDetector(
+                            onTap: () {
+                              print("Display Name Tapped: ${story['displayName']}");
+                            },
+                            child: Text("${story['displayName'] ?? 'Unknown'}",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                )),
                           ),
                         ],
                       ),
@@ -174,43 +200,69 @@ class _StoryDetailsPageState extends State<StoryDetailsPage> {
             },
           ),
           // Add invisible tap areas for navigation
-          Positioned.fill(
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      if (_currentIndex > 0) {
-                        _pageController.previousPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    child: Container(
-                      color: Colors.transparent, // Make it invisible
+          // This Stack widget also covers the IconButton
+          Stack(
+            children: [
+              Positioned.fill(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTapDown: (_) => _pauseTimer(), // Pause timer on single tap
+                        onTapUp: (_) => _resumeTimer(), // Resume timer after untap
+                        onTapCancel: () => _resumeTimer(), // Resume timer if tap is canceled
+                        onLongPressStart: (_) => _pauseTimer(), // Pause timer on long press
+                        onLongPressEnd: (_) => _resumeTimer(), // Resume timer after long press ends
+                        onTap: () {
+                          if (_currentIndex > 0) {
+                            _pageController.previousPage(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        child: Container(
+                          color: Colors.transparent, // Make it invisible
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      if (_currentIndex < widget.stories.length - 1) {
-                        _pageController.nextPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Container(
-                      color: Colors.transparent, // Make it invisible
+                    Expanded(
+                      child: GestureDetector(
+                        onTapDown: (_) => _pauseTimer(), // Pause timer on single tap
+                        onTapUp: (_) => _resumeTimer(), // Resume timer after untap
+                        onTapCancel: () => _resumeTimer(), // Resume timer if tap is canceled
+                        onLongPressStart: (_) => _pauseTimer(), // Pause timer on long press
+                        onLongPressEnd: (_) => _resumeTimer(), // Resume timer after long press ends
+                        onTap: () {
+                          if (_currentIndex < widget.stories.length - 1) {
+                            _pageController.nextPage(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Container(
+                          color: Colors.transparent, // Make it invisible
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              Positioned( // Moved IconButton here so it's on top
+                top: 40,
+                left: 16,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.white),
+                  onPressed: () {
+                    print('asdasd');
+                    Navigator.pop(context); // Example action: close the story view
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),

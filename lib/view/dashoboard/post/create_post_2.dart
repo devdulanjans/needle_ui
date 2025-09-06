@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../controller/api/api_controller.dart';
 import '../../../controller/auth_controller.dart';
+import '../../main_screen.dart';
 import '../home_feed.dart';
 
 class CreatePostPage extends StatefulWidget {
@@ -285,7 +286,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   // Navigate to HomeFeed and trigger refresh
                   await Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (context) => HomeFeed(refreshStories: true),
+                      builder: (context) => MainScreen(),
                     ),
                   );
                   // Optionally, you can also pop the CreateStoryPage if you don't want to return to it

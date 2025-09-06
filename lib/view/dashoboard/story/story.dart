@@ -104,7 +104,7 @@ class _StoriesListState extends State<StoriesList> {
     return Column(
       children: [
         SizedBox(
-          height: 200,
+          height: 180,
           child:
               _isLoading
                   ? Center(child: CircularProgressIndicator())

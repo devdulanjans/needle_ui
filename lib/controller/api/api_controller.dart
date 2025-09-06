@@ -18,6 +18,7 @@ Future<dynamic> API_V1_call({
   final setUrl = "${$baseUrl}${url}";
   Map<String, String>? headers = await header(isHeader: isHeader,oldAccessToken: oldAccessToken, type: type);
   var response;
+  print("NAW setUrl: ${setUrl} - $method");
 
   if (method == "POST") {
     response = await http.post(
@@ -154,6 +155,59 @@ Future<dynamic> API_V1_Multipart_call_Story({
   return responseBody;
 }
 
+// Page Image Upload
+Future<dynamic> API_V1_Multipart_call_Page({
+  required String url,
+  required String method,
+  Map<String, dynamic>? body,
+  bool isHeader = true,
+  String? filePaths,
+  String? mediaTypes// If true, only one image will be sent
+}) async {
+
+  print("filePaths: ${filePaths.toString()}");
+  print("mediaTypes: ${File(filePaths!).existsSync()}");
+  print("url: ${url}");
+
+  if (filePaths == null || filePaths.isEmpty) {
+    throw ArgumentError("filePaths cannot be null or empty");
+  }
+
+  final setUrl = "${$baseUrl}${url}";
+  Map<String, String>? headers = await header(isHeader: isHeader);
+  print("setUrl: ${setUrl}");
+
+  var request = http.MultipartRequest(method, Uri.parse(setUrl));
+
+  // Add fields to the request
+  if (body != null) {
+    request.fields.addAll(body.map((key, value) => MapEntry(key, value.toString())));
+    print("Request Body Fields: ${request.fields}");
+  }
+
+  print("ESP BODY: ${body}");
+  print("FILE PATH: ${filePaths.toString()}");
+
+  // Ensure filePath is a valid path string and the file exists
+  if (filePaths != null && File(filePaths).existsSync()) {
+    request.files.add(await http.MultipartFile.fromPath('file', filePaths));
+  } else {
+    print("File does not exist or path is invalid: $filePaths");
+    // Handle the error appropriately, maybe return an error response or throw an exception
+  }
+
+  request.headers.addAll(headers!);
+
+  var response = await request.send();
+
+  print("Response Status: ${response.statusCode}");
+  print("Response Reason: ${response.reasonPhrase}");
+
+  // Read and return response body
+  final responseBody = await response.stream.bytesToString();
+  return responseBody;
+}
+
 void checkFilePath(String path) {
   if (File(path).existsSync()) {
     print("File exists at: $path");
@@ -164,13 +218,13 @@ void checkFilePath(String path) {
 
 Future<Map<String, String>?> header({bool isHeader = true,int type = 0,String oldAccessToken = ""}) async { //type 0 for normal header, type 1 for refresh header
   if (isHeader == true) {
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
+
     String? accessToken = type == 1 ? oldAccessToken : await getAccessToken();
     String? refreshToken = await getRefreshToken();
     dynamic userId = await getUserId();
 
-    // print("userId: $userId");
-    // print("accessToken: "+accessToken!);
+    print("userId: $userId");
+    print("accessToken: "+accessToken!);
 
     return {
       'Content-Type': 'application/json',

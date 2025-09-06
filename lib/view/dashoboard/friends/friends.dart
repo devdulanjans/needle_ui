@@ -30,47 +30,58 @@ class _FriendsPageState extends State<FriendsPage> {
   // //   },
   // // ];
 
+  bool _isLoading = false;
   List<FriendRequest>? friendRequest;
 
   Future<void> callFriendRequestApi() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final requests = await getAllPendingRequest();
       setState(() {
         friendRequest = requests.isNotEmpty ? requests : [];
+        _isLoading = false;
       });
     } catch (e) {
       print("Error fetching friend requests: $e");
       setState(() {
         friendRequest = [];
+        _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching friend requests: $e')),
+      );
     }
   }
 
   Future<void> friendRequestApprove(String id) async{
-
+    setState(() {
+      _isLoading = true;
+    });
     var responseData = await API_V1_call(
       url: "/api/friend-request/status/${id}?status=ACCEPTED",
       method: "PUT",
       isHeader: true,
-
     );
-
+    setState(() {
+      _isLoading = false;
+    });
     if (responseData.statusCode == 200) {
       final data = jsonDecode(responseData.body)['data'] == null
           ? []
           : jsonDecode(responseData.body)['data'];
       print(responseData);
-      // ScaffoldMessenger.of(
-      //   context,
-      // ).showSnackBar(SnackBar(content: Text('Error fetching stories')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Friend request approved successfully!')),
+      );
+      // Refresh the list after approval
+      callFriendRequestApi();
     } else {
       // Handle error
-      setState(() {
-        // _isLoading = false;
-      });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error fetching stories')));
+      ).showSnackBar(SnackBar(content: Text('Failed to approve friend request: ${responseData.body}')));
     }
   }
 
@@ -79,13 +90,17 @@ class _FriendsPageState extends State<FriendsPage> {
     print("ID: ${id}");
     print("URL: /api/friend-request/status/${id}?status=ACCEPTED");
 
+    setState(() {
+      _isLoading = true;
+    });
     var responseData = await API_V1_call(
       url: "/api/friend-request/${id}",
       method: "DELETE",
       isHeader: true,
-
     );
-
+    setState(() {
+      _isLoading = false;
+    });
     print('asd - Response: ${responseData.statusCode}');
     print('asd - Response: ${responseData.body}');
 
@@ -94,18 +109,16 @@ class _FriendsPageState extends State<FriendsPage> {
           ? []
           : jsonDecode(responseData.body)['data'];
       print(responseData);
-      setState(() {
-        // _stories.addAll(data);
-        // _isLoading = false;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Friend request deleted successfully!')),
+      );
+      // Refresh the list after deletion
+      callFriendRequestApi();
     } else {
       // Handle error
-      setState(() {
-        // _isLoading = false;
-      });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error fetching stories')));
+      ).showSnackBar(SnackBar(content: Text('Failed to delete friend request: ${responseData.body}')));
     }
   }
 
@@ -123,7 +136,7 @@ class _FriendsPageState extends State<FriendsPage> {
         leading: IconButton.outlined(onPressed: (){Navigator.pop(context);}, icon: Icon(Icons.arrow_back_ios,color: Colors.black,)),
         title: Text('Friends', style: TextStyle(color: Colors.black,fontWeight: FontWeight.w700),),
       ),
-      body: friendRequest == null
+      body: _isLoading || friendRequest == null
           ? Center(child: CircularProgressIndicator())
           : friendRequest!.isEmpty
           ? Center(child: Text('No pending friend requests'))
