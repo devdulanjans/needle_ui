@@ -332,7 +332,7 @@ class _SignupScreenState extends State<SignupScreen> {
       );
       // print("responseDecode: "+responseData.body.toString());
       var responseDecode = json.decode(responseData.body);
-      print(responseData);
+      print("RESPONSE: $responseDecode");
 
       setState(() {
         _isLoading = false;

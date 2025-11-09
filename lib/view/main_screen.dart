@@ -32,7 +32,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     mapToScreen();
     _screens = [
       HomeFeed(),
-      VideoFeed(),
+      Container(child:Text("No Vivid available right now")),
+      // VideoFeed(),
       FriendsPage(),
       PollsScreen(),
       // ProfileScreen(userId: _finalGetUserId)
@@ -71,7 +72,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       _finalGetUserId = _userId!;
       _screens = [
         HomeFeed(),
-        VideoFeed(),
+        Container(child:Center(child: Text("No Vivid available right now",style: TextStyle(color: Colors.black),))),
+        // VideoFeed(),
         FriendsPage(),
         PollsScreen(),
         // ProfileScreen(userId: _finalGetUserId)

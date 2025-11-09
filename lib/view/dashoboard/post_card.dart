@@ -20,7 +20,6 @@ class PostCard extends StatefulWidget {
   final Map<String, dynamic> wallPost;
   final VoidCallback? onPostDeleted;
 
-
   PostCard(this.wallPost, {this.onPostDeleted});
 
   @override
@@ -40,9 +39,7 @@ class _PostCardState extends State<PostCard> {
   @override
   void initState() {
     super.initState();
-    print(
-      "widget.wallPost['wallId'].toString(): ${widget.wallPost}",
-    );
+    print("widget.wallPost['wallId'].toString(): ${widget.wallPost}");
     _getComments(widget.wallPost['wallId'].toString());
     _getLikesOfPost();
     likeCount = widget.wallPost['likeCount'] ?? 0;
@@ -57,7 +54,7 @@ class _PostCardState extends State<PostCard> {
     super.dispose();
   }
 
-  Future<void> pickLoggedUser() async{
+  Future<void> pickLoggedUser() async {
     loggedUserId = (await getUserId())!;
   }
 
@@ -350,8 +347,7 @@ class _PostCardState extends State<PostCard> {
                                     onLongPress: () {
                                       print("comment: ${comment}");
                                       // return;
-                                      CommentActionController
-                                          .showCommentOptions(
+                                      CommentActionController.showCommentOptions(
                                         context,
                                         comment['content'],
                                         comment['creatorId'].toString(),
@@ -367,10 +363,12 @@ class _PostCardState extends State<PostCard> {
                                     child: Container(
                                       padding: EdgeInsets.all(5),
                                       decoration: BoxDecoration(
-                                        color: Colors.purpleAccent.withAlpha(30),
+                                        color: Colors.purpleAccent.withAlpha(
+                                          30,
+                                        ),
                                         // Background color
                                         borderRadius: BorderRadius.circular(
-                                          12,
+                                          0.0,
                                         ), // Curved corners
                                       ),
                                       child: Column(
@@ -385,7 +383,9 @@ class _PostCardState extends State<PostCard> {
                                               Navigator.of(context).push(
                                                 MaterialPageRoute(
                                                   builder:
-                                                      (context) => ProfileScreen(
+                                                      (
+                                                        context,
+                                                      ) => ProfileScreen(
                                                         userId:
                                                             comment['creatorId']
                                                                 .toString(),
@@ -464,7 +464,7 @@ class _PostCardState extends State<PostCard> {
                                 vertical: 14.0,
                               ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                                borderRadius: BorderRadius.circular(0.0),
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -547,7 +547,10 @@ class _PostCardState extends State<PostCard> {
                                 ),
                                 title: Text(
                                   comment['displayName'] ?? 'Unknown User',
-                                  style: TextStyle(color: Colors.black),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                  ),
                                 ),
                               );
                             },
@@ -633,12 +636,22 @@ class _PostCardState extends State<PostCard> {
 
     // Retrieve the existing list of saved posts
     final String? savedPostsJson = prefs.getString('savedPosts');
-    List<dynamic> savedPosts = savedPostsJson != null ? jsonDecode(savedPostsJson) : [];
+    List<dynamic> savedPosts =
+        savedPostsJson != null ? jsonDecode(savedPostsJson) : [];
+
+    // It's crucial to compare posts by a unique identifier, like 'wallId'.
+    // Assuming 'wallId' is unique for each post.
+    String currentPostId = widget.wallPost['wallId'].toString();
 
     // Check if the new post already exists in the list
-    if (!savedPosts.any((post) => mapEquals(post, widget.wallPost))) {
-      savedPosts.add(widget.wallPost); // Add the new post if it's not a duplicate
-      await prefs.setString('savedPosts', jsonEncode(savedPosts)); // Save the updated list
+    if (!savedPosts.any((post) => post['wallId'].toString() == currentPostId)) {
+      savedPosts.add(
+        widget.wallPost, // Add the new post if it's not a duplicate
+      ); // Add the new post if it's not a duplicate
+      await prefs.setString(
+        'savedPosts',
+        jsonEncode(savedPosts),
+      ); // Save the updated list
       print("Post added and saved locally: ${widget.wallPost}");
     } else {
       print("Duplicate post. Not saved.");
@@ -651,9 +664,12 @@ class _PostCardState extends State<PostCard> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Confirm Delete",style: TextStyle(color: Colors.black)),
+          title: Text("Confirm Delete", style: TextStyle(color: Colors.black)),
           backgroundColor: Colors.white,
-          content: Text("Are you sure you want to delete this post?", style: TextStyle(color: Colors.black)),
+          content: Text(
+            "Are you sure you want to delete this post?",
+            style: TextStyle(color: Colors.black),
+          ),
           actions: <Widget>[
             TextButton(
               child: Text("Cancel"),
@@ -662,7 +678,7 @@ class _PostCardState extends State<PostCard> {
               },
             ),
             TextButton(
-              child: Text("OK", style: TextStyle(color: Colors.red),),
+              child: Text("OK", style: TextStyle(color: Colors.red)),
               onPressed: () async {
                 Navigator.of(context).pop(); // Close the dialog
                 final response = await API_V1_call(
@@ -670,7 +686,8 @@ class _PostCardState extends State<PostCard> {
                   method: "DELETE",
                 );
                 print("REMOVE RESPONSE: ${response.body}");
-                if (response.statusCode == 200 && widget.onPostDeleted != null) {
+                if (response.statusCode == 200 &&
+                    widget.onPostDeleted != null) {
                   widget.onPostDeleted!();
                 }
               },
@@ -769,7 +786,10 @@ class _PostCardState extends State<PostCard> {
                           ListTile(
                             title: Text(
                               "Interested",
-                              style: TextStyle(color: Colors.black),
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                             ),
                             leading: Icon(
                               Icons.add_circle,
@@ -783,7 +803,10 @@ class _PostCardState extends State<PostCard> {
                           ListTile(
                             title: Text(
                               "Not Interested",
-                              style: TextStyle(color: Colors.black),
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                             ),
                             leading: Icon(
                               Icons.remove_circle,
@@ -799,7 +822,10 @@ class _PostCardState extends State<PostCard> {
                           ListTile(
                             title: Text(
                               "Save Link",
-                              style: TextStyle(color: Colors.black),
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                             ),
                             leading: Icon(Icons.save_alt, color: Colors.black),
                             onTap: () {
@@ -808,23 +834,34 @@ class _PostCardState extends State<PostCard> {
                               print("Save Link selected");
                             },
                           ),
-                          loggedUserId == widget.wallPost['userId'].toString() ? ListTile(
-                            title: Text(
-                              "Move To Bin",
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            leading: Icon(Icons.remove_circle, color: Colors.black),
-                            onTap: () {
-                              removePost();
-                              // It's generally better to pop the navigator *after* the async operation if it depends on the context,
-                              // but since showDialog creates a new route, popping it here is fine.
-                              // Navigator.pop(context);
-                            },
-                          ):SizedBox(height: 0,),
+                          loggedUserId == widget.wallPost['userId'].toString()
+                              ? ListTile(
+                                title: Text(
+                                  "Move To Bin",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                leading: Icon(
+                                  Icons.remove_circle,
+                                  color: Colors.black,
+                                ),
+                                onTap: () {
+                                  removePost();
+                                  // It's generally better to pop the navigator *after* the async operation if it depends on the context,
+                                  // but since showDialog creates a new route, popping it here is fine.
+                                  // Navigator.pop(context);
+                                },
+                              )
+                              : SizedBox(height: 0),
                           ListTile(
                             title: Text(
                               "Hide ad",
-                              style: TextStyle(color: Colors.black),
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                             ),
                             leading: Icon(
                               Icons.hide_source,
@@ -838,7 +875,10 @@ class _PostCardState extends State<PostCard> {
                           ListTile(
                             title: Text(
                               "Report ad",
-                              style: TextStyle(color: Colors.black),
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                             ),
                             leading: Icon(Icons.report, color: Colors.black),
                             onTap: () {
@@ -849,7 +889,10 @@ class _PostCardState extends State<PostCard> {
                           ListTile(
                             title: Text(
                               "Why I am seeing this?",
-                              style: TextStyle(color: Colors.black),
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                             ),
                             leading: Icon(
                               Icons.remove_red_eye,
@@ -863,7 +906,10 @@ class _PostCardState extends State<PostCard> {
                           ListTile(
                             title: Text(
                               "Be notified about this post",
-                              style: TextStyle(color: Colors.black),
+                              style: GoogleFonts.poppins(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
                             ),
                             leading: Icon(Icons.post_add, color: Colors.black),
                             onTap: () {
@@ -907,7 +953,7 @@ class _PostCardState extends State<PostCard> {
                               widget.wallPost['Media'].length > 0
                           ? widget.wallPost['Media'].length == 1
                               ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8.0),
+                                borderRadius: BorderRadius.circular(0.0),
                                 child: CachedNetworkImage(
                                   imageUrl: imagePathSetter(
                                     imageName:
@@ -922,21 +968,19 @@ class _PostCardState extends State<PostCard> {
                                 ),
                               )
                               : GridView.builder(
+                                scrollDirection: Axis.horizontal,
+
                                 padding: const EdgeInsets.all(8.0),
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount:
-                                          widget.wallPost['Media'].length < 1
-                                              ? 1
-                                              : 2,
-                                      // Show single column if less than 1, else 2
+                                      crossAxisCount: 1,
                                       crossAxisSpacing: 8.0,
                                       mainAxisSpacing: 8.0,
                                     ),
                                 itemCount: widget.wallPost['Media'].length,
                                 itemBuilder: (context, index) {
                                   return ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
+                                    borderRadius: BorderRadius.circular(0.0),
                                     child: CachedNetworkImage(
                                       imageUrl: imagePathSetter(
                                         imageName:
@@ -970,7 +1014,10 @@ class _PostCardState extends State<PostCard> {
                     padding: const EdgeInsets.only(left: 16.0),
                     child: Text(
                       "${postLikes.length} Likes",
-                      style: TextStyle(color: Colors.black54),
+                      style: GoogleFonts.poppins(
+                        color: Colors.black,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -983,7 +1030,10 @@ class _PostCardState extends State<PostCard> {
                     padding: const EdgeInsets.only(left: 16.0),
                     child: Text(
                       "${comments.length} Comments",
-                      style: TextStyle(color: Colors.black54),
+                      style: GoogleFonts.poppins(
+                        color: Colors.black,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -1012,7 +1062,10 @@ class _PostCardState extends State<PostCard> {
                         ),
                         onPressed: _likePost,
                       ),
-                      Text("$likeCount", style: TextStyle(color: Colors.black)),
+                      Text("$likeCount", style: GoogleFonts.poppins(
+                        color: Colors.black,
+                        fontSize: 14,
+                      ),),
                     ],
                   ),
                 ),
@@ -1029,27 +1082,35 @@ class _PostCardState extends State<PostCard> {
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       SizedBox(width: 10),
-                      Text("Comment", style: TextStyle(color: Colors.black)),
+                      Text("Comment",
+                        style: GoogleFonts.poppins(
+                          color: Colors.black,
+                          fontSize: 14,
+                        ),),
                     ],
                   ),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
+                GestureDetector(
+                  onTap: (){
+                    SharePlus.instance.share(
+                      ShareParams(
+                        text: 'check out my website https://example.com',
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Icon(
                         Icons.share,
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      onPressed: () {
-                        print("this.");
-                        SharePlus.instance.share(
-                            ShareParams(text: 'check out my website https://example.com')
-                        );
-                        // _showShareBottomSheet(context);
-                      },
-                    ),
-                    Text("Share", style: TextStyle(color: Colors.black)),
-                  ],
+                      SizedBox(width: 5,),
+                      Text("Share", style: GoogleFonts.poppins(
+                        color: Colors.black,
+                        fontSize: 14,
+                      ),),
+                    ],
+                  ),
                 ),
               ],
             ),

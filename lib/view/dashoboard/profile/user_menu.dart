@@ -457,7 +457,7 @@ class _UserMenuState extends State<UserMenu> {
       // {'icon': Icons.feed, 'label': 'Reels', 'colors': Colors.red},
       {
         'icon': Icons.video_collection,
-        'label': 'Reels',
+        'label': 'Vivid',
         'colors': Colors.purple,
         "navigateId":1
       },

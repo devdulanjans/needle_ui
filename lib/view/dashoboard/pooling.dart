@@ -8,30 +8,30 @@ class PollsScreen extends StatefulWidget {
 
 class _PollsScreenState extends State<PollsScreen> {
   final List<VideoPoll> _polls = [
-    VideoPoll(
-      id: '1',
-      title: 'ඔය ඇස් දෙක ',
-      channel: 'Apparel FM',
-      youtubeUrl: 'https://www.youtube.com/shorts/PKHSP2H17r8',
-      votes: 1245,
-      isLeading: true,
-    ),
-    VideoPoll(
-      id: '2',
-      title: 'නිල්වන් මුහුදු තිරේ ',
-      channel: 'Tech Master',
-      youtubeUrl: 'https://www.youtube.com/shorts/a9SrO1WKwdk',
-      votes: 845,
-      isLeading: false,
-    ),
-    VideoPoll(
-      id: '3',
-      title: 'Tamil Song',
-      channel: 'Tech Master',
-      youtubeUrl: 'https://www.youtube.com/shorts/276ljDcap-w',
-      votes: 845,
-      isLeading: false,
-    ),
+    // VideoPoll(
+    //   id: '1',
+    //   title: 'ඔය ඇස් දෙක ',
+    //   channel: 'Apparel FM',
+    //   youtubeUrl: 'https://www.youtube.com/shorts/PKHSP2H17r8',
+    //   votes: 1245,
+    //   isLeading: true,
+    // ),
+    // VideoPoll(
+    //   id: '2',
+    //   title: 'නිල්වන් මුහුදු තිරේ ',
+    //   channel: 'Tech Master',
+    //   youtubeUrl: 'https://www.youtube.com/shorts/a9SrO1WKwdk',
+    //   votes: 845,
+    //   isLeading: false,
+    // ),
+    // VideoPoll(
+    //   id: '3',
+    //   title: 'Tamil Song',
+    //   channel: 'Tech Master',
+    //   youtubeUrl: 'https://www.youtube.com/shorts/276ljDcap-w',
+    //   votes: 845,
+    //   isLeading: false,
+    // ),
     // Add more sample polls
   ];
 
@@ -40,11 +40,11 @@ class _PollsScreenState extends State<PollsScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Video Polls'),
-        backgroundColor: Colors.black,
-        actions: [
-          IconButton(icon: Icon(Icons.add), onPressed: _createNewPoll),
-        ],
+        title: Text('Votes', style: TextStyle(color: Colors.black),),
+        backgroundColor: Colors.white,
+        // actions: [
+        //   IconButton(icon: Icon(Icons.add,color: Colors.black,), onPressed: _createNewPoll),
+        // ],
       ),
       body: PageView.builder(
         scrollDirection: Axis.vertical,

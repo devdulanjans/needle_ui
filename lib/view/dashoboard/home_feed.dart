@@ -118,22 +118,32 @@ class _HomeFeedState extends State<HomeFeed> {
       print("123 - Posts data: $posts");
       if (posts != null) {
         data = (posts as List);
-        data.shuffle();
-
-        print("00-123 - Posts data: $posts");
       } else {
         print('Posts data is null');
       }
 
+      // setState(() {
+      //   if (page == 0) {
+      //     _allPostData = data;
+      //   } else {
+      //     _allPostData.addAll(data);
+      //   }
+      //   _currentPage = page;
+      //   _isFetchingMore = false;
+      // });
+
       setState(() {
         if (page == 0) {
           _allPostData = data;
+            // ..sort((a, b) => DateTime.parse(a['createdAt']).compareTo(DateTime.parse(b['createdAt'])));
         } else {
           _allPostData.addAll(data);
+          // _allPostData.sort((a, b) => DateTime.parse(a['createdAt']).compareTo(DateTime.parse(b['createdAt'])));
         }
         _currentPage = page;
         _isFetchingMore = false;
       });
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching posts')),

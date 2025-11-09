@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../controller/auth_controller.dart';
 import '../authentication/login_new.dart';
+import 'account_deletion.dart';
 
 class SettingsPrivacyPage extends StatefulWidget {
   @override
@@ -29,6 +30,14 @@ class _SettingsPrivacyPageState extends State<SettingsPrivacyPage> {
     });
 
   }
+
+  void _navigateToPage(Widget page) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +95,13 @@ class _SettingsPrivacyPageState extends State<SettingsPrivacyPage> {
                   SettingsSection(
                     title: "Authantication",
                     items: [
+                      SettingsItem(
+                        icon: Icons.delete,
+                        label: "Delete Account",
+                        onTap: () {
+                          _navigateToPage(AccountDeletionPage());
+                        },
+                      ),
                       SettingsItem(
                         icon: Icons.logout,
                         label: "Log Out",

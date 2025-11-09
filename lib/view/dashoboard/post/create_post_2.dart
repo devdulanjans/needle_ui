@@ -168,13 +168,13 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Widget _buildAttachmentOptions() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildAttachmentButton(
             icon: Icons.photo_library,
-            label: 'Photo/Video',
+            label: 'Photo',
             onPressed: _pickImages,
           ),
         ],
@@ -230,9 +230,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   void _handlePost() async {
 
-    setState(() {
-      isLoading = true;
-    });
+    // setState(() {
+    //   isLoading = true;
+    // });
     List<String> imagePaths = _selectedImages.map((file) => file.path).toList();
 
     List<String> imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
@@ -248,6 +248,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
         return 'UNSUPPORTED';
       }
     }).toList();
+
+    print("mediaType: $mediaType");
+
 
     String? userId = await getUserId();
 
@@ -265,6 +268,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
       isHeader: true,
       mediaTypes: mediaType
     );
+
+    return;
 
     var allResponseData = jsonDecode(responseData);
     setState(() {

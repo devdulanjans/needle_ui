@@ -44,9 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildLogo(),
                 // SizedBox(height: 20),
                 _buildForm(context),
-                SizedBox(height: 30),
-                _buildSocialLogin(context),
-                SizedBox(height: 100),
+                SizedBox(height: 70),
+                // _buildSocialLogin(context),
+                // SizedBox(height: 100),
                 // Row(
                 //   mainAxisAlignment: MainAxisAlignment.center,
                 //   children: [
@@ -320,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             _buildSocialButton(
               icon: Icons.g_mobiledata,
-              color: Colors.redAccent,
+              color: Colors.white,
               onPressed: () {},
             ),
             SizedBox(width: 20),

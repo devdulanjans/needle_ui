@@ -34,7 +34,7 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
     try {
 
       final responseData = await API_V1_call(
-        url: "/api/post/user/${widget.userId}?page=0&limit=20",
+        url: "/api/post/user/${widget.userId}?page=0&limit=100",
         method: "GET",
         isHeader: true,
       );

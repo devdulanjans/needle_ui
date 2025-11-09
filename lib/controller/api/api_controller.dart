@@ -76,6 +76,10 @@ Future<dynamic> API_V1_Multipart_call({
       final mediaKey = 'media[$i].media';
       final mediaTypeKey = 'media[$i].mediaType';
 
+      print("In loop - path: $path");
+      print("In loop - mediaKey: $mediaKey");
+      print("In loop - mediaTypeKey: $mediaTypeKey");
+
       if (File(path).existsSync()) {
         request.files.add(await http.MultipartFile.fromPath(mediaKey, path));
         if (mediaTypes != null && i < mediaTypes.length) {
@@ -93,6 +97,8 @@ Future<dynamic> API_V1_Multipart_call({
 
   print("Final request fields: ${request.fields}");
   print("Final headers: ${request.headers}");
+
+  return;
 
   var response = await request.send();
 
@@ -223,8 +229,8 @@ Future<Map<String, String>?> header({bool isHeader = true,int type = 0,String ol
     String? refreshToken = await getRefreshToken();
     dynamic userId = await getUserId();
 
-    print("userId: $userId");
-    print("accessToken: "+accessToken!);
+    // print("userId: $userId");
+    // print("accessToken: "+accessToken!);
 
     return {
       'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ExpandableText extends StatefulWidget {
   final String text;
@@ -25,7 +26,10 @@ class _ExpandableTextState extends State<ExpandableText> {
       children: [
         Text(
           displayText,
-          style: TextStyle(color: Colors.black, fontSize: 14),
+          style: GoogleFonts.poppins(
+            color: Colors.black,
+            fontSize: 14,
+          ),
         ),
         if (widget.text.length > 100)
           GestureDetector(

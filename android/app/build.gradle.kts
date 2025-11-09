@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "lk.needle.needleapp"
+    namespace = "lk.needle.socialneedleapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -30,10 +30,10 @@ android {
 
     defaultConfig {
 //        applicationId = "com.example.needle2"
-        applicationId = "lk.needle.needleapp"
+        applicationId = "lk.needle.socialneedleapp"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
-        versionCode = 1
+        versionCode = 2
         versionName = flutter.versionName
     }
 
