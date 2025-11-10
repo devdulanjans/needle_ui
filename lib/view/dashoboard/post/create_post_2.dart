@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -230,9 +231,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   void _handlePost() async {
 
-    // setState(() {
-    //   isLoading = true;
-    // });
+    setState(() {
+      isLoading = true;
+    });
     List<String> imagePaths = _selectedImages.map((file) => file.path).toList();
 
     List<String> imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
@@ -251,26 +252,29 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
     print("mediaType: $mediaType");
 
-
+    String? userProfileId = await getProfileUserId();
     String? userId = await getUserId();
+    String profileType = await getProfileType(type: 2) ?? "user";
 
     var bodyData = {
       'content': _postController.text,
       'visibility': _selectedValue,
-      'creatorId':userId
+      if (profileType == "user") 'creatorId': userProfileId,
+      if (profileType == "page") 'pageId': userId,
+      if (profileType == "page") 'createdBy': userProfileId,
+
     };
 
     var responseData = await API_V1_Multipart_call(
       method: "POST",
-      url: "/api/post",
+      url: profileType == "user" ? "/api/post" : "/api/page/post",
       filePaths: imagePaths,
       body: bodyData,
       isHeader: true,
       mediaTypes: mediaType
     );
 
-    return;
-
+    log("CheckResponseData:${responseData}");
     var allResponseData = jsonDecode(responseData);
     setState(() {
       isLoading = false;
@@ -304,6 +308,33 @@ class _CreatePostPageState extends State<CreatePostPage> {
         },
       );
     }
+  }
+
+  void _handlePostTest() async {
+
+    // setState(() {
+    //   isLoading = true;
+    // });
+    List<String> imagePaths = _selectedImages.map((file) => file.path).toList();
+
+    List<String> imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    List<String> videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'flv', 'wmv'];
+
+    List<String?> mediaType = _selectedImages.map((file) {
+      String extension = file.path.split('.').last.toLowerCase();
+      if (imageExtensions.contains(extension)) {
+        return 'IMAGE';
+      } else if (videoExtensions.contains(extension)) {
+        return 'VIDEO';
+      } else {
+        return 'UNSUPPORTED';
+      }
+    }).toList();
+
+    log("mediaType: $imagePaths");
+
+
+
   }
 
   @override

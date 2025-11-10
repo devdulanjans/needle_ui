@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import '../auth_controller.dart';
 import '../config/helper.dart';
@@ -19,6 +20,7 @@ Future<dynamic> API_V1_call({
   Map<String, String>? headers = await header(isHeader: isHeader,oldAccessToken: oldAccessToken, type: type);
   var response;
   print("NAW setUrl: ${setUrl} - $method");
+  log("CheckHeaders:${headers}");
 
   if (method == "POST") {
     response = await http.post(
@@ -98,7 +100,7 @@ Future<dynamic> API_V1_Multipart_call({
   print("Final request fields: ${request.fields}");
   print("Final headers: ${request.headers}");
 
-  return;
+  // return;
 
   var response = await request.send();
 
@@ -227,7 +229,7 @@ Future<Map<String, String>?> header({bool isHeader = true,int type = 0,String ol
 
     String? accessToken = type == 1 ? oldAccessToken : await getAccessToken();
     String? refreshToken = await getRefreshToken();
-    dynamic userId = await getUserId();
+    dynamic userId = await getProfileUserId();
 
     // print("userId: $userId");
     // print("accessToken: "+accessToken!);
@@ -244,7 +246,7 @@ Future<Map<String, String>?> header({bool isHeader = true,int type = 0,String ol
 
 Future<bool> refreshAccessToken({String? method, String? url}) async {
   final refreshToken = await getRefreshToken();
-  final userId = await getUserId();
+  final userId = await getProfileUserId();
   String? accessToken = await getAccessTokenOld(); //get the old access token for refresh
 
   print("refreshToken: $refreshToken");

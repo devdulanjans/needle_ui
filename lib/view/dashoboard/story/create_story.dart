@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -300,6 +301,34 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
         },
       );
     }
+  }
+
+  void _handlePostTest() async {
+
+    setState(() {
+      isLoading = true;
+    });
+    List<String> imagePaths = _selectedImages.map((file) => file.path).toList();
+    var getImagePaths = _selectedImages;
+
+    List<String> imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    List<String> videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'flv', 'wmv'];
+
+    List<String?> mediaType = _selectedImages.map((file) {
+      String extension = file.path.split('.').last.toLowerCase();
+      if (imageExtensions.contains(extension)) {
+        return 'IMAGE';
+      } else if (videoExtensions.contains(extension)) {
+        return 'VIDEO';
+      } else {
+        return 'UNSUPPORTED';
+      }
+    }).toList();
+
+
+    log("mediaType: $mediaType");
+
+
   }
 
   @override

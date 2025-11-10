@@ -31,7 +31,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isLoading = false;
   bool isFriend = false;
   String? userId = "";
+  String? userProfileId = "";
   String? userName = "";
+  String? imageRequestType = "PROFILE";
   File? _selectedCoverImage;
   File? _selectedImage;
   String loggedUserId = "";
@@ -85,10 +87,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> callLocalData() async {
     var _userIdVal = await getUserId();
+    var _userProfileId = await getProfileUserId();
     var _userNameVal = await getUserName();
+    var requestImageType = await getImageRequestType();
     setState(() {
       userName = _userNameVal;
       userId = _userIdVal;
+      userProfileId = _userProfileId ;
+      imageRequestType = requestImageType;
+      print("CheckImageRequestType:${imageRequestType}");
     });
   }
 
@@ -144,6 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _pickProfileImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
 
     if (pickedFile != null) {
       setState(() {
@@ -424,15 +432,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                   false)
                                               ? CachedNetworkImageProvider(
                                                 imagePathSetter(
-                                                  imageName:
-                                                      fetchedUserData
-                                                          ?.profilePicture,
+                                                  imageName: fetchedUserData?.profilePicture,
                                                   imageSize: "THUMBNAIL",
-                                                  requestingImageType:
-                                                      "PROFILE",
-                                                  setUserId:
-                                                      fetchedUserData?.id
-                                                          .toString(),
+                                                  requestingImageType: imageRequestType,
+                                                  setUserId:userProfileId,
                                                 ),
                                               )
                                               : AssetImage(

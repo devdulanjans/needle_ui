@@ -32,12 +32,13 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
     });
 
     try {
-
+      String postType = await getProfileType(type: 2) ?? "user";
       final responseData = await API_V1_call(
-        url: "/api/post/user/${widget.userId}?page=0&limit=100",
+        url: "/api/post/$postType/${widget.userId}?page=0&limit=100",
         method: "GET",
         isHeader: true,
       );
+
 
       if (responseData.statusCode == 200) {
         var data = [];

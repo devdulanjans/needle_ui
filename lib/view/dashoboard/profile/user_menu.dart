@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -30,15 +31,17 @@ class _UserMenuState extends State<UserMenu> {
   List<dynamic> pageList = [];
 
   Future<void> profileData() async {
-    var _userId = await getUserId();
+    var _userId = await getProfileUserId();
+    var requestImageType = await getImageRequestType();
     var _imageUrl = await getUserProfilePicture();
+    profileType = await getProfileType() ?? "USER";
 
     setState(() {
       if (_imageUrl != null && _imageUrl.isNotEmpty) {
         _profileImage = imagePathSetter(
           imageName: _imageUrl,
           imageSize: "THUMBNAIL",
-          requestingImageType: "PROFILE",
+          requestingImageType: requestImageType ?? "PROFILE",
           setUserId: _userId,
         );
       } else {
@@ -65,7 +68,7 @@ class _UserMenuState extends State<UserMenu> {
 
   Future<void> _fetchFriendDetails() async {
     var userName = await getUserName();
-    var _userId = await getUserId();
+    var _userId = await getProfileUserId();
     var userProfile = await getUserProfilePicture();
 
 
@@ -123,24 +126,46 @@ class _UserMenuState extends State<UserMenu> {
 
 
     print("Logged in as ${profile['name']} - isPage: ${profile['isPage']}");
+    log("CheckPageDetaild:${pageDetails.toString()}");
+    bool isPage =(pageDetails['ownerId'] ?? "").toString() != "" ? true : false;
+    log("CheckIsPage:$isPage -- ${""}");
 
-    await savePageProfile(
-      pageId: int.parse(pageDetails["id"].toString()).toString(),
-      pageName: pageDetails["displayName"],
-      profilePicture: pageDetails["profilePicture"],
-      coverImage: pageDetails["coverPicture"]
+
+    if(isPage){
+      //Switch to page
+      await savePage(
+        userId: (pageDetails['id'] ?? "").toString(),
+        displayName: pageDetails['displayName'] ?? "",
+        email: pageDetails['email'] ?? "",
+        bio: pageDetails['bio'] ?? "",
+        profilePicture: pageDetails['profilePicture'] ?? "",
+        coverImage:pageDetails['coverPicture'] ?? "",
+        mobileNo: (pageDetails['contactNumber'] ?? "").toString(),
+        isPage: true
+      );
+    }else{
+      //Re-switch to profile
+
+      await savePage(
+        userId: (pageDetails['userId'] ?? "").toString(),
+        displayName: pageDetails['displayName'] ?? "",
+        email: pageDetails['email'] ?? "",
+        bio: pageDetails['bio'] ?? "",
+        profilePicture: pageDetails['profilePicture'] ?? "",
+        coverImage:pageDetails['coverPicture'] ?? "",
+        mobileNo: (pageDetails['mobileNo'] ?? "").toString(),
+        isPage:false
+      );
+    }
+
+
+
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MainScreen(screenIndex: 4),
+      ),
     );
-
-    print("Logged in as ${profile['name']} - isPage: ${profile['isPage']}");
-    // Navigator.of(context).push(
-    //   MaterialPageRoute(
-    //     builder:
-    //         (context) => SwitchPage(
-    //       pageName: pageList[index]["displayName"],
-    //       profileImage: "",
-    //     ),
-    //   ),
-    // );
   }
 
   @override
@@ -287,106 +312,218 @@ class _UserMenuState extends State<UserMenu> {
 
   Future<dynamic> _existingPageListShowModalBottomSheet() {
     return showModalBottomSheet(
-      isScrollControlled: true,
+      isScrollControlled: true, // Allow dynamic height based on content
       context: context,
       builder: (BuildContext context) {
-        return SingleChildScrollView(
-          child: Container(
-            // Adjust height based on content or use constraints
-            // height: pageList.isEmpty ? 250.00 : MediaQuery.of(context).size.height * 0.7, // Example height
-            margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20.0),
-                topRight: Radius.circular(20.0),
-              ),
-              border: Border.all(color: Colors.grey, width: 0.5),
+        // Get 75% of the screen height
+        double height = MediaQuery.of(context).size.height * 0.75;
+
+        return Container(
+          height: height, // Set the fixed height for the bottom sheet
+          margin: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20.0),
+              topRight: Radius.circular(20.0),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              // Important for SingleChildScrollView
-              children: [
-                if (isLoading)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(),
-                  )
-                else if (pageList.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      "No pages found.",
-                      style: TextStyle(color: Colors.black),
-                    ),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    // Important for ListView inside SingleChildScrollView
-                    physics: const NeverScrollableScrollPhysics(),
-                    // To prevent nested scrolling
-                    itemCount: pageList.length,
-                    itemBuilder: (context, index) {
-                      print("pageList[index]: ${pageList[index]}");
-                      return ListTile(
-                        leading: CircleAvatar(
-                          radius: 20,
-                          backgroundImage: (pageList[index]["profilePicture"] != null && pageList[index]["profilePicture"].isNotEmpty)
-                              ? CachedNetworkImageProvider(
-                                  imagePathSetter(
-                                    imageName: pageList[index]["profilePicture"],
-                                    imageSize: "FULL",
-                                    requestingImageType: "PAGEPROFILE",
-                                    setUserId: int.tryParse(pageList[index]["ownerId"].toString())?.toString(),
+            border: Border.all(color: Colors.grey, width: 0.5),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Prevents the column from taking up more space than necessary
+            children: [
+              if (isLoading)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                )
+              else if (pageList.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    "No pages found.",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                )
+              else
+              // Wrapping ListView in Expanded to make it scrollable
+                Expanded(
+                  child: FutureBuilder<Map<String, String?>>(
+                    future: getUserData(), // Fetch all user data from SharedPreferences
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        // Show a loading spinner while fetching the data
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        // Handle errors (optional)
+                        return Center(child: Text('Error loading user data'));
+                      } else if (!snapshot.hasData || snapshot.data == null) {
+                        // Handle empty or null data
+                        return Center(child: Text('No user data available'));
+                      }
+
+                      // Get the user data from the snapshot
+                      var userData = snapshot.data!;
+                      String tempUserPPic = userData['profilePicture'] ?? "";
+                      String finalProfileImage = imagePathSetter(
+                        imageName: tempUserPPic,
+                        imageSize: "THUMBNAIL",
+                        requestingImageType: "PROFILE",
+                        setUserId: userData['userId'] ?? "",
+                      );
+                      print("CheckUserProfilePicture:${tempUserPPic}");
+
+                      return Column(
+                        children: [
+                          // Top profile details section
+                          GestureDetector(
+                            onTap:(){
+                              if(_getUserId == userData['userId']){
+                                print("sameprofile");
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Profile already selected!',
+                                      style: TextStyle(
+                                        color: Colors.white, // Text color
+                                        fontWeight: FontWeight.bold, // Optional, for emphasis
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.purple, // Background color
+                                    duration: Duration(seconds: 2), // Duration for the SnackBar to show
+                                    behavior: SnackBarBehavior.fixed, // Optional: To make the SnackBar floating
                                   ),
-                                  errorListener: (e) {
-                                    // Handle image loading errors, e.g., show a placeholder
-                                    print("Error loading image: $e");
-                                    // You can set a flag or update state to show a placeholder
-                                    // For simplicity, returning a placeholder directly here might not be ideal
-                                    // depending on how CachedNetworkImageProvider handles errors.
-                                    // Consider using CachedNetworkImage widget for more control.
+                                );
+
+                                Navigator.of(context).pop();
+                              }
+                              else{
+                                callSwitchPage(userData);
+                              }
+
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100, // Background color for the profile section
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Profile picture
+                                  CircleAvatar(
+                                    radius:40,
+                                    backgroundImage:
+                                    (finalProfileImage.isNotEmpty &&
+                                        Uri.tryParse(finalProfileImage)?.hasAbsolutePath == true)
+                                        ? NetworkImage(finalProfileImage)
+                                        : AssetImage("assets/profile_images.png") as ImageProvider,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  // User name and email
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        userData['displayName'] ?? "Unknown", // Display name from SharedPreferences
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                      ),
+                                      Text(
+                                        userData['email'] ?? "No email", // Email from SharedPreferences
+                                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // List of pages (existing ListView)
+                          Expanded(
+                            child: ListView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: pageList.length,
+                              itemBuilder: (context, index) {
+                                print("pageList[index]: ${pageList[index]}");
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    radius: 20,
+                                    backgroundImage: (pageList[index]["profilePicture"] != null && pageList[index]["profilePicture"].isNotEmpty)
+                                        ? CachedNetworkImageProvider(
+                                      imagePathSetter(
+                                        imageName: pageList[index]["profilePicture"],
+                                        imageSize: "FULL",
+                                        requestingImageType: "PAGEPROFILE",
+                                        setUserId: int.tryParse(pageList[index]["ownerId"].toString())?.toString(),
+                                      ),
+                                      errorListener: (e) {
+                                        print("Error loading image: $e");
+                                      },
+                                    )
+                                        : AssetImage("assets/profile_images.png") as ImageProvider,
+                                  ),
+                                  title: Text(
+                                    pageList[index]["displayName"],
+                                    style: const TextStyle(color: Colors.black),
+                                  ),
+                                  onTap: () {
+
+                                    if(_getUserId == (pageList[index]['id'].toString())){
+                                      print("samepage");
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Page already selected!',
+                                            style: TextStyle(
+                                              color: Colors.white, // Text color
+                                              fontWeight: FontWeight.bold, // Optional, for emphasis
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.purple, // Background color
+                                          duration: Duration(seconds: 2), // Duration for the SnackBar to show
+                                          behavior: SnackBarBehavior.fixed, // Optional: To make the SnackBar floating
+                                        ),
+                                      );
+
+                                      Navigator.of(context).pop();
+                                    }
+                                    else{
+                                      callSwitchPage(pageList[index]);
+                                    }
+
                                   },
-                                )
-                              : AssetImage("assets/profile_images.png") as ImageProvider,
-                        ),
-                        title: Text(
-                          pageList[index]["displayName"],
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                        onTap: () {
-                          callSwitchPage(pageList[index]);
-                        },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
-                _buildBottomSheetButton(
-                  context,
-                  "Create Needle Profile",
-                  Icons.add_circle,
-                  () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                ProfileSelectionPage(), // Assuming ProfileSelectionPage is a const constructor
-                      ),
-                    );
-                  },
                 ),
-                // _buildBottomSheetButton(context, "Another Button", Icons.info_outline, () {
-                //   // Handle another button tap
-                //   print("Another button tapped");
-                // }),
-                const SizedBox(height: 20),
-              ],
-            ),
+
+
+              _buildBottomSheetButton(
+                context,
+                "Create Needle Profile",
+                Icons.add_circle,
+                    () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ProfileSelectionPage(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         );
       },
     );
   }
+
 
   Widget _buildBottomSheetButton(
     BuildContext context,

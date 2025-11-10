@@ -184,18 +184,56 @@ Future<void> saveTokens({
   String? rTokenExpDate,
 }) async {
   final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('accessToken', accessToken!);
-  await prefs.setString('refreshToken', refreshToken!);
-  await prefs.setString('userId', userId!);
-  await prefs.setString('displayName', displayName!);
-  await prefs.setString('email', email!);
-  await prefs.setString('bio', bio!);
-  await prefs.setString('profilePicture', profilePicture!);
-  await prefs.setString('coverImage', coverImage!);
-  await prefs.setString('mobileNo', mobileNo!);
+
+  // Save the current user data
+  await prefs.setString('accessToken', accessToken ?? "");
+  await prefs.setString('refreshToken', refreshToken ?? "");
+  await prefs.setString('userId', userId ?? "");
+  await prefs.setString('displayName', displayName ?? "");
+  await prefs.setString('email', email ?? "");
+  await prefs.setString('bio', bio ?? "");
+  await prefs.setString('profilePicture', profilePicture ?? "");
+  await prefs.setString('coverImage', coverImage ?? "");
+  await prefs.setString('mobileNo', mobileNo ?? "");
   await prefs.setString('refreshTokenExpireDate', rTokenExpDate ?? "");
   await prefs.setBool('isPageMode', false); // Default to user mode
+
+  // Duplicate the data for the original user (using "originalUserId")
+  await prefs.setString('originalUserId', userId ?? "");  // Store the original user ID
+  await prefs.setString('originalDisplayName', displayName ?? "");
+  await prefs.setString('originalEmail', email ?? "");
+  await prefs.setString('originalBio', bio ?? "");
+  await prefs.setString('originalProfilePicture', profilePicture ?? "");
+  await prefs.setString('originalCoverImage', coverImage ?? "");
+  await prefs.setString('originalMobileNo', mobileNo ?? "");
+
 }
+
+Future<void> savePage({
+  String? userId,
+  String? displayName,
+  String? email,
+  String? bio,
+  String? profilePicture,
+  String? coverImage,
+  String? mobileNo,
+  bool? isPage
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  // Save the current user data
+
+  await prefs.setString('userId', userId ?? "");
+  await prefs.setString('displayName', displayName ?? "");
+  await prefs.setString('email', email ?? "");
+  await prefs.setString('bio', bio ?? "");
+  await prefs.setString('profilePicture', profilePicture ?? "");
+  await prefs.setString('coverImage', coverImage ?? "");
+  await prefs.setString('mobileNo', mobileNo ?? "");
+  await prefs.setBool('isPageMode', isPage ?? false); // Default to user mode
+
+}
+
 
 Future<void> setProfileImage(String profileImage)async {
   final prefs = await SharedPreferences.getInstance();
@@ -266,6 +304,11 @@ Future<String?> getUserId() async {
   return prefs.getString('userId');
 }
 
+Future<String?> getProfileUserId() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('originalUserId');
+}
+
 Future<String?> getUserName() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('displayName');
@@ -296,6 +339,21 @@ Future<String?> getUserMobileNo() async {
   return prefs.getString('mobileNo');
 }
 
+///image request type based on profile / page
+
+Future<String?> getImageRequestType() async {
+  final prefs = await SharedPreferences.getInstance();
+  bool isPage =  prefs.getBool('isPageMode') ?? false;
+  return isPage ? "PAGEPROFILE" : "PROFILE";
+}
+
+Future<String?> getProfileType({int type = 1}) async {
+  final prefs = await SharedPreferences.getInstance();
+  bool isPage =  prefs.getBool('isPageMode') ?? false;
+  return type == 1 ? (isPage ? "PAGE" : "USER") : (isPage ? "page" : "user");
+}
+
+
 /// -------------------- PAGE GETTERS ---------------------
 Future<String?> getPageId() async {
   final prefs = await SharedPreferences.getInstance();
@@ -321,6 +379,38 @@ Future<String?> getPageToken() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('pageToken');
 }
+
+
+///get Original logged in user data
+
+Future<Map<String, String?>> getUserData() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  // Retrieve all user-related data from SharedPreferences
+  String? userId = prefs.getString('originalUserId');
+  String? displayName = prefs.getString('originalDisplayName');
+  String? email = prefs.getString('originalEmail');
+  String? bio = prefs.getString('originalBio');
+  String? profilePicture = prefs.getString('originalProfilePicture');
+  String? coverImage = prefs.getString('originalCoverImage');
+  String? mobileNo = prefs.getString('originalMobileNo');
+  bool? isPageMode = false;
+
+  // Return all data as a Map
+  return {
+    'userId': userId,
+    'displayName': displayName,
+    'email': email,
+    'bio': bio,
+    'profilePicture': profilePicture,
+    'coverImage': coverImage,
+    'mobileNo': mobileNo,
+    'isPageMode': isPageMode?.toString(), // Converting bool to string if necessary
+  };
+}
+
+
+
 
 /// -------------------- SWITCH MODE ---------------------
 Future<void> setActiveProfileType(bool isPage) async {
