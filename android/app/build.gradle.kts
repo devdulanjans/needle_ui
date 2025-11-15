@@ -31,7 +31,7 @@ android {
     defaultConfig {
 //        applicationId = "com.example.needle2"
         applicationId = "lk.needle.socialneedleapp"
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = 2
         versionName = flutter.versionName

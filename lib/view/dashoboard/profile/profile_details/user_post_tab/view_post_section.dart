@@ -7,7 +7,8 @@ import 'user_defined_post.dart';
 class ViewPostDetails extends StatefulWidget {
   final userName;
   final userId;
-  const ViewPostDetails({this.userName, this.userId, super.key});
+  final userImage;
+  const ViewPostDetails({this.userName, this.userId,this.userImage, super.key});
 
   @override
   State<ViewPostDetails> createState() => _ViewPostDetailsState();
@@ -94,7 +95,7 @@ class _ViewPostDetailsState extends State<ViewPostDetails> {
                 ],
               ),
               SizedBox(height: 20,),
-              UserDefinedPost(userDisplayName: widget.userName,userId: widget.userId,)
+              UserDefinedPost(userDisplayName: widget.userName,userId: widget.userId,userImage: widget.userImage,)
             ],
           ),
           SizedBox(height: 10),

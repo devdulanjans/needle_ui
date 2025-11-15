@@ -307,6 +307,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: ViewPostDetails(
             userName: fetchedUserData?.displayName,
             userId: fetchedUserData?.id,
+            userImage: fetchedUserData?.profilePicture ?? "",
+
           ),
         );
       case 1:

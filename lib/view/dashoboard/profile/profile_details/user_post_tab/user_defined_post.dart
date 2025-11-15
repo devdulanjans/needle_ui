@@ -13,7 +13,8 @@ import '../../../widget/common_seperator.dart';
 class UserDefinedPost extends StatefulWidget {
   final userDisplayName;
   final userId;
-  const UserDefinedPost({this.userDisplayName, this.userId, super.key});
+  final userImage;
+  const UserDefinedPost({this.userDisplayName, this.userId,this.userImage, super.key});
 
   @override
   State<UserDefinedPost> createState() => _UserDefinedPostState();
@@ -22,6 +23,7 @@ class UserDefinedPost extends StatefulWidget {
 class _UserDefinedPostState extends State<UserDefinedPost> {
 
   bool isLoading = false;
+  bool isPage = false;
   List<dynamic> _allPostData = [];
 
   Future<void> _getUserPost() async {
@@ -33,8 +35,10 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
 
     try {
       String postType = await getProfileType(type: 2) ?? "user";
+      String apiUrl = postType == "user" ? "/api/post/$postType" : "/api/$postType/posts";
+      isPage = postType == "user" ? false : true;
       final responseData = await API_V1_call(
-        url: "/api/post/$postType/${widget.userId}?page=0&limit=100",
+        url: "$apiUrl/${widget.userId}?page=0&limit=100",
         method: "GET",
         isHeader: true,
       );
@@ -42,8 +46,14 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
 
       if (responseData.statusCode == 200) {
         var data = [];
+        dynamic posts;
 
-        final posts = jsonDecode(responseData.body)['data'];
+        if(postType == "user"){
+          posts = jsonDecode(responseData.body)['data'];
+        }else if(postType == "page"){
+          posts = jsonDecode(responseData.body)['data']['posts'];
+        }
+
 
         if (posts != null) {
           data = (posts as List).reversed.toList();
@@ -85,6 +95,7 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
 
   @override
   Widget build(BuildContext context) {
+    print("CheckUserImage-USER-DEFINED:${widget.userImage}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -148,6 +159,16 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
           height: 400,
           child: ListView.builder(
             itemBuilder: (context, index) {
+              if(isPage){
+                _allPostData[index]['userName'] = widget.userDisplayName;
+                _allPostData[index]['userProfileImage'] = widget.userImage;
+                _allPostData[index]['userProfileId'] =  (_allPostData[index]['createdBy'] ?? 0);
+                _allPostData[index]['imageRequestType'] =  "PAGEPROFILE";
+                _allPostData[index]['contentText'] =  (_allPostData[index]['content'] ?? "");
+              }else{
+                _allPostData[index]['userProfileId'] =  _allPostData[index]['creatorId'];
+                _allPostData[index]['imageRequestType'] =  "PROFILE";
+              }
               return PostCard(_allPostData[index]);
             },
             itemCount: _allPostData.length,

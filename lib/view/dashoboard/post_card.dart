@@ -33,7 +33,7 @@ class _PostCardState extends State<PostCard> {
   final TextEditingController _commentController = TextEditingController();
   List<dynamic> comments = [];
   List<dynamic> postLikes = [];
-
+  bool isPage = false;
   String loggedUserId = "";
 
   @override
@@ -53,6 +53,9 @@ class _PostCardState extends State<PostCard> {
     _commentController.dispose();
     super.dispose();
   }
+
+
+
 
   Future<void> pickLoggedUser() async {
     loggedUserId = (await getUserId())!;
@@ -722,8 +725,8 @@ class _PostCardState extends State<PostCard> {
               imagePathSetter(
                 imageName: widget.wallPost['userProfileImage'],
                 imageSize: "MEDIUM",
-                requestingImageType: "PROFILE",
-                setUserId: widget.wallPost['userId'].toString(),
+                requestingImageType: widget.wallPost['imageRequestType'],
+                setUserId: widget.wallPost['userProfileId'].toString(),
               ),
             )
             : AssetImage('assets/profile_images.png');
