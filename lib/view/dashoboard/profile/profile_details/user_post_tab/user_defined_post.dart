@@ -65,6 +65,11 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
         if (mounted) {
           setState(() {
             _allPostData = data;
+            _allPostData.sort((a, b) {
+              final dateA = DateTime.parse(a["updatedAt"]);
+              final dateB = DateTime.parse(b["updatedAt"]);
+              return dateB.compareTo(dateA); // newest first
+            });
           });
         }
       } else {
