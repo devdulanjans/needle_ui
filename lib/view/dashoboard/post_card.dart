@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1095,11 +1096,8 @@ class _PostCardState extends State<PostCard> {
                 ),
                 GestureDetector(
                   onTap: (){
-                    SharePlus.instance.share(
-                      ShareParams(
-                        text: 'check out my website https://example.com',
-                      ),
-                    );
+                    // log("CheckPostId:${widget.wallPost.toString()}");
+                    showShareOptions(context,(widget.wallPost['postId'] ?? "").toString());
                   },
                   child: Row(
                     children: [
@@ -1122,4 +1120,81 @@ class _PostCardState extends State<PostCard> {
       ),
     );
   }
+
+  Future<void> _sharePostInternally(String postId) async {
+
+    try {
+      int pId = int.tryParse(postId) ?? -1;
+      if(pId != -1){
+        String apiUrl = "/api/page/post/share/$pId";
+        final responseData = await API_V1_call(
+          url: "$apiUrl",
+          method: "GET",
+          isHeader: true,
+        );
+
+        if (responseData.statusCode == 200) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Post shared successfully.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.purple.shade100,),);
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Post sharing failed.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.red.shade100,),);
+        }
+      }else{
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Post sharing failed.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.red.shade100,),);
+      }
+
+
+    } catch (e) {
+      print("Error calling API: $e");
+    }
+  }
+
+  void showShareOptions(BuildContext context,String postId) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.share,color: Colors.purple,),
+                title: Text("Share inside app",style: TextStyle(color: Colors.black),),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sharePostInternally(postId);
+
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.send,color: Colors.purple,),
+                title: Text("Share externally",style: TextStyle(color: Colors.black)),
+                onTap: () {
+                  Navigator.pop(context);
+                  SharePlus.instance.share(
+                    ShareParams(
+                      text: 'check out my website https://example.com',
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
+
+
+
+
+
+
+
+
