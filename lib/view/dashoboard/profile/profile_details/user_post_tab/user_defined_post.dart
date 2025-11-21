@@ -169,10 +169,12 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
                 _allPostData[index]['userProfileImage'] = widget.userImage;
                 _allPostData[index]['userProfileId'] =  (_allPostData[index]['createdBy'] ?? 0);
                 _allPostData[index]['imageRequestType'] =  "PAGEPROFILE";
+                _allPostData[index]['isPage'] =  true;
                 _allPostData[index]['contentText'] =  (_allPostData[index]['content'] ?? "");
               }else{
                 _allPostData[index]['userProfileId'] =  _allPostData[index]['creatorId'];
                 _allPostData[index]['imageRequestType'] =  "PROFILE";
+                _allPostData[index]['isPage'] =  false;
               }
               return PostCard(_allPostData[index]);
             },

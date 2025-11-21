@@ -40,8 +40,14 @@ class _PostCardState extends State<PostCard> {
   @override
   void initState() {
     super.initState();
+    checkProfileType();
     print("widget.wallPost['wallId'].toString(): ${widget.wallPost}");
-    _getComments(widget.wallPost['wallId'].toString());
+    if(widget.wallPost['isPage'] ?? false){
+      _getComments(widget.wallPost['id'].toString(),type: 1);
+    }else{
+      _getComments(widget.wallPost['wallId'].toString(),type: 11);
+    }
+
     _getLikesOfPost();
     likeCount = widget.wallPost['likeCount'] ?? 0;
     isLiked = widget.wallPost['isLiked'] ?? false;
@@ -55,6 +61,18 @@ class _PostCardState extends State<PostCard> {
     super.dispose();
   }
 
+
+  Future<void> checkProfileType()async{
+
+    var profileType = await getProfileType(type: 2) ?? "user";
+    if(profileType == "user"){
+      isPage = false;
+    }else if(profileType == "page"){
+      isPage = true;
+    }
+
+    print("CheckProfileType:${isPage}");
+  }
 
 
 
@@ -172,13 +190,13 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
-  void _getComments(String postId) async {
+  void _getComments(String postId,{int type = 1}) async {
     final response = await API_V1_call(
       url: "/api/post/comment/${postId}",
       method: "GET",
     );
 
-    print("REP post Id: ${[postId]}");
+    print("REP post Id: ${[postId]} -- Type:$type");
     print("API CALL: /api/post/comment/${postId}");
 
     print("response.statusCode: ${response.statusCode}");
@@ -359,7 +377,7 @@ class _PostCardState extends State<PostCard> {
                                         () {
                                           _getComments(
                                             widget.wallPost['wallId']
-                                                .toString(),
+                                                .toString(),type: 2
                                           );
                                         },
                                       );
@@ -482,6 +500,7 @@ class _PostCardState extends State<PostCard> {
                               _commentController.clear();
                               _getComments(
                                 widget.wallPost['wallId'].toString(),
+                                type: 3
                               );
                             }
                           },
@@ -1027,7 +1046,7 @@ class _PostCardState extends State<PostCard> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    _getComments(widget.wallPost['wallId'].toString());
+                    _getComments(widget.wallPost['wallId'].toString(),type: 4);
                     _showCommentBottomSheet(context);
                   },
                   child: Padding(
@@ -1076,7 +1095,7 @@ class _PostCardState extends State<PostCard> {
 
                 GestureDetector(
                   onTap: () {
-                    _getComments(widget.wallPost['wallId'].toString());
+                    _getComments(widget.wallPost['wallId'].toString(),type: 5);
                     _showCommentBottomSheet(context);
                   },
                   child: Row(
