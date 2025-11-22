@@ -50,7 +50,7 @@ class _SavePostState extends State<SavePost> {
                 itemCount: savedPosts.length,
                 itemBuilder: (context, index) {
                   final post = savedPosts[index];
-                  return PostCard(post);
+                  return PostCard(post, isUserDefined: true,);
                 },
               )
               : const Center(

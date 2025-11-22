@@ -176,7 +176,7 @@ class _UserDefinedPostState extends State<UserDefinedPost> {
                 _allPostData[index]['imageRequestType'] =  "PROFILE";
                 _allPostData[index]['isPage'] =  false;
               }
-              return PostCard(_allPostData[index]);
+              return PostCard(_allPostData[index], isUserDefined: true,);
             },
             itemCount: _allPostData.length,
           ),

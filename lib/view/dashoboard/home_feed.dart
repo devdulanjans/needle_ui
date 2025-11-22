@@ -277,7 +277,7 @@ class _HomeFeedState extends State<HomeFeed> {
                   SliverToBoxAdapter(child: StoriesList()),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
-                        (context, index) => PostCard(_allPostData[index],onPostDeleted: () => removeElement(index)),
+                        (context, index) => PostCard(_allPostData[index],onPostDeleted: () => removeElement(index), isUserDefined: false,),
                         childCount: _allPostData.length),
                   ),
                 ],

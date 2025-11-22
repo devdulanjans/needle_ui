@@ -20,8 +20,9 @@ import 'package:share_plus/share_plus.dart';
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> wallPost;
   final VoidCallback? onPostDeleted;
+  final bool isUserDefined;
 
-  PostCard(this.wallPost, {this.onPostDeleted});
+  PostCard(this.wallPost, {this.onPostDeleted,required this.isUserDefined});
 
   @override
   _PostCardState createState() => _PostCardState();
@@ -42,7 +43,7 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     checkProfileType();
     print("widget.wallPost['wallId'].toString(): ${widget.wallPost}");
-    if(widget.wallPost['isPage'] ?? false){
+    if((widget.wallPost['isPage'] ?? false) && widget.isUserDefined){
       _getComments(widget.wallPost['id'].toString(),type: 1);
     }else{
       _getComments(widget.wallPost['wallId'].toString(),type: 11);
@@ -152,14 +153,22 @@ class _PostCardState extends State<PostCard> {
 
   void _commentPost() async {
     var _bodyData = {"content": _commentController.text.toString()};
+    String url = "";
+    print("CheckWallPost-${widget.wallPost.toString()}");
+    if(isPage && widget.isUserDefined){
+      url = "/api/page/post/comment/${widget.wallPost['id'].toString()}";
+    }else{
+      url = "/api/post/${widget.wallPost['postId']}/comment";
+    }
+
 
     final response = await API_V1_call(
-      url: "/api/post/${widget.wallPost['wallId']}/comment",
+      url: url,
       body: _bodyData,
       method: "POST",
     );
 
-    print("response.body: ${response.body}");
+    print("response.body:-Comment-- ${response.body}");
 
     if (response.statusCode == 200) {
       var data = [];
@@ -191,8 +200,17 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _getComments(String postId,{int type = 1}) async {
+    String apiUrl = "";
+
+    if(isPage && widget.isUserDefined){
+      apiUrl = "/api/page/post/comment/${postId}";
+    }else{
+      apiUrl = "/api/post/comment/${postId}";
+    }
+
+
     final response = await API_V1_call(
-      url: "/api/post/comment/${postId}",
+      url: apiUrl,
       method: "GET",
     );
 
@@ -375,9 +393,8 @@ class _PostCardState extends State<PostCard> {
                                         comment['creatorId'].toString(),
                                         comment['id'].toString(),
                                         () {
-                                          _getComments(
-                                            widget.wallPost['wallId']
-                                                .toString(),type: 2
+                                          String postId= isPage && widget.isUserDefined ? widget.wallPost['id'].toString() : widget.wallPost['wallId'].toString();
+                                          _getComments(postId,type: 2
                                           );
                                         },
                                       );
@@ -499,7 +516,7 @@ class _PostCardState extends State<PostCard> {
                               _commentPost();
                               _commentController.clear();
                               _getComments(
-                                widget.wallPost['wallId'].toString(),
+                                widget.wallPost['postId'].toString(),
                                 type: 3
                               );
                             }
@@ -1046,7 +1063,8 @@ class _PostCardState extends State<PostCard> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    _getComments(widget.wallPost['wallId'].toString(),type: 4);
+                     String postId= isPage && widget.isUserDefined ? widget.wallPost['id'].toString() : widget.wallPost['wallId'].toString();
+                    _getComments(postId,type: 4);
                     _showCommentBottomSheet(context);
                   },
                   child: Padding(
@@ -1095,7 +1113,8 @@ class _PostCardState extends State<PostCard> {
 
                 GestureDetector(
                   onTap: () {
-                    _getComments(widget.wallPost['wallId'].toString(),type: 5);
+                    String postId= isPage && widget.isUserDefined ? widget.wallPost['id'].toString() : widget.wallPost['wallId'].toString();
+                    _getComments(postId,type: 5);
                     _showCommentBottomSheet(context);
                   },
                   child: Row(
@@ -1115,8 +1134,10 @@ class _PostCardState extends State<PostCard> {
                 ),
                 GestureDetector(
                   onTap: (){
-                    // log("CheckPostId:${widget.wallPost.toString()}");
-                    showShareOptions(context,(widget.wallPost['postId'] ?? "").toString());
+                    //log("CheckPostId:${widget.wallPost.toString()}");
+                    String postId = isPage && widget.isUserDefined ? (widget.wallPost['id'] ?? "").toString() : (widget.wallPost['postId'] ?? "").toString();
+                    print("CheckPostShare:-IsPage-${isPage} --PostId-${postId}--${widget.wallPost['postId']}");
+                    showShareOptions(context,(postId));
                   },
                   child: Row(
                     children: [
@@ -1144,8 +1165,17 @@ class _PostCardState extends State<PostCard> {
 
     try {
       int pId = int.tryParse(postId) ?? -1;
+      print("CheckPostShare:${pId}");
       if(pId != -1){
-        String apiUrl = "/api/page/post/share/$pId";
+
+        String apiUrl = "";
+        if(isPage){
+          apiUrl = "/api/page/post/share/$pId";
+        }else{
+          apiUrl = "/api/post/share/$pId";
+        }
+
+
         final responseData = await API_V1_call(
           url: "$apiUrl",
           method: "GET",
