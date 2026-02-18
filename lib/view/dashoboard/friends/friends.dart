@@ -7,6 +7,7 @@ import 'package:needle2/model/friend_request_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../controller/api/api_controller.dart';
+import '../../../controller/auth_controller.dart';
 import '../../../controller/config/image_path_setter.dart';
 import '../../../controller/friend_api.dart';
 
@@ -32,6 +33,8 @@ class _FriendsPageState extends State<FriendsPage> {
 
   bool _isLoading = false;
   List<FriendRequest>? friendRequest;
+  List<FriendRequest>? blockUsers;
+  bool isBlockPage = false;
 
   Future<void> callFriendRequestApi() async {
     setState(() {
@@ -122,11 +125,35 @@ class _FriendsPageState extends State<FriendsPage> {
     }
   }
 
+  Future<void> getBlockUsers() async {
+    var _userId = await getProfileUserId();
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final requests = await getAllBlockUsers(_userId ??  "");
+      setState(() {
+        blockUsers = requests.isNotEmpty ? requests : [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error fetching friend requests: $e");
+      setState(() {
+        blockUsers = [];
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching friend requests: $e')),
+      );
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     callFriendRequestApi();
+    getBlockUsers();
   }
 
   @override
@@ -134,7 +161,23 @@ class _FriendsPageState extends State<FriendsPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton.outlined(onPressed: (){Navigator.pop(context);}, icon: Icon(Icons.arrow_back_ios,color: Colors.black,)),
-        title: Text('Friends', style: TextStyle(color: Colors.black,fontWeight: FontWeight.w700),),
+        title: Text(isBlockPage ? "Block Users" : 'Friends', style: TextStyle(color: Colors.black,fontWeight: FontWeight.w700),),
+        actions: [
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(isBlockPage ? Icons.block : Icons.person_add_sharp, color: Colors.black), // Right icon (Chat icon)
+                onPressed: () {
+                  setState(() {
+                    isBlockPage = !isBlockPage;
+
+                  });
+                },
+              ),
+
+            ],
+          ),
+        ],
       ),
       body: _isLoading || friendRequest == null
           ? Center(child: CircularProgressIndicator())
@@ -174,14 +217,14 @@ class _FriendsPageState extends State<FriendsPage> {
                       color: Colors.black,
                     ),
                   ),
-                Text(
+                  Text(
                   formattedDate ?? "",
                   style: TextStyle(
                     color: Colors.grey,
                     fontSize: 12,
                   ),
                 ),
-                Row(
+                  Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     SizedBox(

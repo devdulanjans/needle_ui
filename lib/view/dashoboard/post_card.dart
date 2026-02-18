@@ -12,6 +12,7 @@ import '../../controller/actions/comment_action_controller.dart';
 import '../../controller/api/api_controller.dart';
 import '../../controller/auth_controller.dart';
 import '../../controller/config/image_path_setter.dart';
+import '../../controller/friend_api.dart';
 import '../widget/expandableText.dart';
 import 'post/full_screenImage.dart';
 import 'profile/profile.dart';
@@ -816,12 +817,43 @@ class _PostCardState extends State<PostCard> {
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
-                  builder: (context) {
+                  builder: (c) {
                     return Container(
                       padding: EdgeInsets.all(16.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          Visibility(
+                            visible: loggedUserId != widget.wallPost['userId'].toString(),
+                            child: ListTile(
+                              title: Text(
+                                "Block User",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              leading: Icon(
+                                Icons.block,
+                                color: Colors.black,
+                              ),
+                              onTap: () async{
+                                Navigator.pop(c);
+                                print("Blocking User - ${widget.wallPost['userId'].toString()}");
+                                bool result = await blockUser(widget.wallPost['userId'].toString());
+                                if(result){
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).showSnackBar(SnackBar(content: Text('User blocked successfully.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.purple.shade100,),);
+                                }else{
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).showSnackBar(SnackBar(content: Text('User blocked failed.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.red.shade100,),);
+                                }
+                              },
+                            ),
+                          ),
+
                           // Section 1
                           ListTile(
                             title: Text(
@@ -836,7 +868,7 @@ class _PostCardState extends State<PostCard> {
                               color: Colors.black,
                             ),
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pop(c);
                               print("Interested selected");
                             },
                           ),
@@ -853,7 +885,7 @@ class _PostCardState extends State<PostCard> {
                               color: Colors.black,
                             ),
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pop(c);
                               print("Not Interested selected");
                             },
                           ),
@@ -870,7 +902,7 @@ class _PostCardState extends State<PostCard> {
                             leading: Icon(Icons.save_alt, color: Colors.black),
                             onTap: () {
                               savePost();
-                              Navigator.pop(context);
+                              Navigator.pop(c);
                               print("Save Link selected");
                             },
                           ),
@@ -908,7 +940,7 @@ class _PostCardState extends State<PostCard> {
                               color: Colors.black,
                             ),
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pop(c);
                               print("Hide ad selected");
                             },
                           ),
@@ -922,7 +954,7 @@ class _PostCardState extends State<PostCard> {
                             ),
                             leading: Icon(Icons.report, color: Colors.black),
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pop(c);
                               print("Report ad selected");
                             },
                           ),
@@ -939,7 +971,7 @@ class _PostCardState extends State<PostCard> {
                               color: Colors.black,
                             ),
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pop(c);
                               print("Why I am seeing this? selected");
                             },
                           ),
@@ -953,10 +985,11 @@ class _PostCardState extends State<PostCard> {
                             ),
                             leading: Icon(Icons.post_add, color: Colors.black),
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pop(c);
                               print("Be notified about this post selected");
                             },
                           ),
+
                         ],
                       ),
                     );
