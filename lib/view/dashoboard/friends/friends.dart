@@ -35,6 +35,7 @@ class _FriendsPageState extends State<FriendsPage> {
   List<FriendRequest>? friendRequest;
   List<FriendRequest>? blockUsers;
   bool isBlockPage = false;
+  String loggedUserId = "";
 
   Future<void> callFriendRequestApi() async {
     setState(() {
@@ -126,12 +127,12 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   Future<void> getBlockUsers() async {
-    var _userId = await getProfileUserId();
+    loggedUserId = await getProfileUserId() ?? "";
     setState(() {
       _isLoading = true;
     });
     try {
-      final requests = await getAllBlockUsers(_userId ??  "");
+      final requests = await getAllBlockUsers(loggedUserId);
       setState(() {
         blockUsers = requests.isNotEmpty ? requests : [];
         _isLoading = false;
@@ -160,13 +161,13 @@ class _FriendsPageState extends State<FriendsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton.outlined(onPressed: (){Navigator.pop(context);}, icon: Icon(Icons.arrow_back_ios,color: Colors.black,)),
+       leading: null,
         title: Text(isBlockPage ? "Block Users" : 'Friends', style: TextStyle(color: Colors.black,fontWeight: FontWeight.w700),),
         actions: [
           Row(
             children: [
               IconButton(
-                icon: Icon(isBlockPage ? Icons.block : Icons.person_add_sharp, color: Colors.black), // Right icon (Chat icon)
+                icon: Icon(isBlockPage ? Icons.block : Icons.person, color: Colors.black), // Right icon (Chat icon)
                 onPressed: () {
                   setState(() {
                     isBlockPage = !isBlockPage;
@@ -179,103 +180,206 @@ class _FriendsPageState extends State<FriendsPage> {
           ),
         ],
       ),
-      body: _isLoading || friendRequest == null
-          ? Center(child: CircularProgressIndicator())
-          : friendRequest!.isEmpty
-          ? Center(child: Text('No pending friend requests'))
-          : ListView.builder(
-        itemCount: friendRequest!.length,
-        itemBuilder: (context, index) {
-          final request = friendRequest![index];
-          final DateTime postDate = DateTime.parse(request.createdAt.toString());
-          final String formattedDate = timeago.format(postDate);
+      body: _isLoading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : isBlockPage
+          ? buildBlockedUsers()
+          : buildFriendRequests(),
+    );
+  }
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: ListTile(
-              leading: CircleAvatar(
-                radius: 40,
-                backgroundImage: (request.profileUrl != null && request.profileUrl.isNotEmpty)
-                    ? CachedNetworkImageProvider(
-                  imagePathSetter(
-                    imageName: request.profileUrl,
-                    imageSize: "FULL",
-                    requestingImageType: "PROFILE",
-                    setUserId: request.senderUserId.toString(),
-                  ),
-                )
-                    : AssetImage("assets/profile_images.png") as ImageProvider,
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    request.displayName ?? 'Unknown',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                      color: Colors.black,
-                    ),
-                  ),
-                  Text(
-                  formattedDate ?? "",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-                  Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 130, // Reduced width
-                      height: 35, // Reduced height
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Handle confirm action
-                          friendRequestApprove(request.id.toString());
-                        },
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          backgroundColor: Colors.purple,
-                        ),
-                        child: Text(
-                          'Confirm',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    SizedBox(
-                      width: 130, // Reduced width
-                      height: 35, // Reduced height
-                      child: OutlinedButton(
-                        onPressed: () {
-                          // Handle delete action
-                          friendRequestDelete(request.id.toString());
-                        },
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          backgroundColor: Colors.black12,
-                        ),
-                        child: Text(
-                          'Delete',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                ],
-              ),
-            ),
-          );
-        },
+
+
+Widget buildFriendRequests() {
+  if (friendRequest == null ||
+      friendRequest!.isEmpty) {
+    return const Center(
+      child: Text(
+        'No pending friend requests',
+        style: TextStyle(color: Colors.black54),
       ),
     );
   }
+
+  return ListView.builder(
+    itemCount: friendRequest!.length,
+    itemBuilder: (context, index) {
+      final request = friendRequest![index];
+      final DateTime postDate =
+      DateTime.parse(request.createdAt.toString());
+      final String formattedDate =
+      timeago.format(postDate);
+
+      return Padding(
+        padding:
+        const EdgeInsets.only(bottom: 8.0),
+        child: ListTile(
+          leading: CircleAvatar(
+            radius: 30,
+            backgroundImage:
+            (request.profileUrl != null &&
+                request.profileUrl
+                    .isNotEmpty)
+                ? CachedNetworkImageProvider(
+                request.profileUrl)
+                : const AssetImage(
+                "assets/profile_images.png")
+            as ImageProvider,
+          ),
+          title: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Text(
+                request.displayName ??
+                    'Unknown',
+                style: GoogleFonts.poppins(
+                  fontWeight:
+                  FontWeight.w500,
+                  fontSize: 16,
+                  color: Colors.black,
+                ),
+              ),
+              Text(
+                formattedDate,
+                style:
+                const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 120,
+                    height: 35,
+                    child:
+                    ElevatedButton(
+                      onPressed: () {
+                        friendRequestApprove(
+                            request.id
+                                .toString());
+                      },
+                      style:
+                      ElevatedButton
+                          .styleFrom(
+                        backgroundColor:
+                        Colors.purple,
+                        shape:
+                        RoundedRectangleBorder(
+                          borderRadius:
+                          BorderRadius
+                              .circular(
+                              12),
+                        ),
+                      ),
+                      child:
+                      const Text(
+                        "Confirm",
+                        style: TextStyle(
+                            color: Colors
+                                .white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                      width: 8),
+                  SizedBox(
+                    width: 120,
+                    height: 35,
+                    child:
+                    OutlinedButton(
+                      onPressed: () {
+                        friendRequestDelete(
+                            request.id
+                                .toString());
+                      },
+                      child:
+                      const Text(
+                        "Delete",
+                        style: TextStyle(
+                            color: Colors
+                                .black),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+// ================= BLOCK USERS VIEW =================
+
+Widget buildBlockedUsers() {
+  if (blockUsers == null || (blockUsers ?? []).isEmpty) {
+    return const Center(
+      child: Text(
+        'No blocked users',
+        style: TextStyle(color: Colors.black54),
+      ),
+    );
+  }
+
+  return ListView.builder(
+    itemCount: blockUsers!.length,
+    itemBuilder: (context, index) {
+      final user = blockUsers![index];
+
+      return ListTile(
+        leading: CircleAvatar(
+          backgroundImage:
+          (user.profileUrl != null &&
+              user.profileUrl
+                  .isNotEmpty)
+              ? CachedNetworkImageProvider(
+              user.profileUrl)
+              : const AssetImage(
+              "assets/profile_images.png")
+          as ImageProvider,
+        ),
+        title: Text(
+          user.displayName ?? "Unknown",
+          style: TextStyle(color: Colors.black),
+        ),
+        trailing:
+        ElevatedButton(
+          onPressed: () async{
+            bool result = await unBlockUser((user.id ?? "").toString(), loggedUserId);
+            if(result){
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('User unblocked successfully.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.purple.shade100,),);
+              getBlockUsers();
+            }else{
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('User unblocked failed.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.red.shade100,),);
+            }
+
+          },
+          style:
+          ElevatedButton
+              .styleFrom(
+            backgroundColor:
+            Colors.red,
+          ),
+          child: const Text(
+            "Unblock",
+            style: TextStyle(
+                color: Colors.white),
+          ),
+        ),
+      );
+    },
+  );
+}
+
 }

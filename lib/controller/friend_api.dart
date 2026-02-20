@@ -29,7 +29,7 @@ Future<List<FriendRequest>> getAllBlockUsers(String userId) async {
   if (responseData.statusCode == 200) {
     print("CheckResponseBlock:${responseData.body}");
     final data = jsonDecode(responseData.body)['data'] as List?;
-    return data?.map((item) => FriendRequest.fromJson(item)).toList() ?? [];
+    return data?.map((item) => FriendRequest.fromJson(item,isBlockUsers: true)).toList() ?? [];
   }
 
   // Return an empty list if the response status is not 200
@@ -37,12 +37,30 @@ Future<List<FriendRequest>> getAllBlockUsers(String userId) async {
 }
 
 
-Future<bool> blockUser(String userId) async {
+Future<bool> blockUser(String blockId,String userId) async {
   var responseData = await API_V1_call(
-    url: "/api/user/1/block/$userId",
+    url: "/api/user/${userId}/block/$blockId",
     method: "GET",
   );
 
+  if (responseData.statusCode == 200) {
+    print("CheckResponseBlock:${responseData.body}");
+    final data = jsonDecode(responseData.body)['status'] ?? "";
+    return (data == 1) ? true : false;
+  }
+
+  // Return an empty list if the response status is not 200
+  return false;
+}
+
+
+Future<bool> unBlockUser(String blockId,String userId) async {
+  var responseData = await API_V1_call(
+    url: "/api/user/${userId}/unblock/$blockId",
+    method: "DELETE",
+  );
+
+  print("CheckResponse:${responseData.body}");
   if (responseData.statusCode == 200) {
     print("CheckResponseBlock:${responseData.body}");
     final data = jsonDecode(responseData.body)['status'] ?? "";

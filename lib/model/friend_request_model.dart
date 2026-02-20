@@ -20,16 +20,16 @@ class FriendRequest {
   });
 
   // Factory method to create an instance from JSON
-  factory FriendRequest.fromJson(Map<String, dynamic> json) {
+  factory FriendRequest.fromJson(Map<String, dynamic> json,{bool isBlockUsers = false}) {
     return FriendRequest(
       id: json['id'],
-      senderUserId: json['senderUserId'],
-      receiverUserId: json['receiverUserId'],
-      status: json['status'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      profileUrl: json['profileUrl'],
-      displayName: json['displayName'],
+      senderUserId: json['senderUserId'] ?? -1,
+      receiverUserId: json['receiverUserId'] ?? -1,
+      status: json['status'] ?? "",
+      createdAt: isBlockUsers ? DateTime.now() :DateTime.parse(json['createdAt'] ?? ""),
+      updatedAt: isBlockUsers ? DateTime.now() :DateTime.parse(json['updatedAt'] ?? ""),
+      profileUrl: json['profileUrl'] ?? "",
+      displayName: json['displayName'] ?? "",
     );
   }
 

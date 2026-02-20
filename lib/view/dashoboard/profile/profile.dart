@@ -568,7 +568,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                       userDisplayName:
                                                           fetchedUserData
                                                               ?.displayName ??
-                                                          '',
+                                                          '',userId: (fetchedUserData?.id ?? "").toString(),
                                                     ),
                                               ),
                                             );

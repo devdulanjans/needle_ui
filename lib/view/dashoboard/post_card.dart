@@ -21,9 +21,10 @@ import 'package:share_plus/share_plus.dart';
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> wallPost;
   final VoidCallback? onPostDeleted;
+  final VoidCallback? onUserBlocked;
   final bool isUserDefined;
 
-  PostCard(this.wallPost, {this.onPostDeleted,required this.isUserDefined});
+  PostCard(this.wallPost, {this.onPostDeleted,required this.isUserDefined,required this.onUserBlocked});
 
   @override
   _PostCardState createState() => _PostCardState();
@@ -840,11 +841,12 @@ class _PostCardState extends State<PostCard> {
                               onTap: () async{
                                 Navigator.pop(c);
                                 print("Blocking User - ${widget.wallPost['userId'].toString()}");
-                                bool result = await blockUser(widget.wallPost['userId'].toString());
+                                bool result = await blockUser(widget.wallPost['userId'].toString(),loggedUserId);
                                 if(result){
                                   ScaffoldMessenger.of(
                                     context,
                                   ).showSnackBar(SnackBar(content: Text('User blocked successfully.',style: TextStyle(color: Colors.black),),backgroundColor: Colors.purple.shade100,),);
+                                  widget.onUserBlocked!();
                                 }else{
                                   ScaffoldMessenger.of(
                                     context,
