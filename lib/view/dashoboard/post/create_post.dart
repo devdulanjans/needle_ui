@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CreatePostDialog extends StatefulWidget {
   @override
@@ -178,6 +179,26 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     );
   }
 
+  Future<XFile> normalizeImage(XFile xfile) async {
+    final file = File(xfile.path);
+    final bytes = await file.readAsBytes();
+
+    final image = img.decodeImage(bytes);
+    if (image == null) return xfile;
+
+    // This auto-fixes EXIF rotation
+    final fixedImage = img.bakeOrientation(image);
+
+    final tempDir = await getTemporaryDirectory();
+    final newPath =
+        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    final newFile = File(newPath)
+      ..writeAsBytesSync(img.encodeJpg(fixedImage, quality: 95));
+
+    return XFile(newFile.path);
+  }
+
   Future<void> _pickImages() async {
     final List<XFile>? images = await _picker.pickMultiImage();
     if (images != null) {
@@ -199,11 +220,14 @@ class _CreatePostDialogState extends State<CreatePostDialog> {
     });
   }
 
-  void _handlePost() {
+  void _handlePost() async{
     // Handle post creation logic here
+    final fixedImages = await Future.wait(
+      _selectedImages.map((image) => normalizeImage(image)),
+    );
     final newPost = {
       'text': _postController.text,
-      'images': _selectedImages.map((file) => file.path).toList(),
+      'images': fixedImages.map((file) => file.path).toList(),
     };
     print(newPost); // Replace with actual post handling
     Navigator.pop(context);

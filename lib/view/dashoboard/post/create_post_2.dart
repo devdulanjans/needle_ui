@@ -4,6 +4,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 import '../../../controller/api/api_controller.dart';
 import '../../../controller/auth_controller.dart';
@@ -229,17 +231,41 @@ class _CreatePostPageState extends State<CreatePostPage> {
     Navigator.pop(context);
   }
 
+  Future<XFile> normalizeImage(XFile xfile) async {
+    final file = File(xfile.path);
+    final bytes = await file.readAsBytes();
+
+    final image = img.decodeImage(bytes);
+    if (image == null) return xfile;
+
+    // This auto-fixes EXIF rotation
+    final fixedImage = img.bakeOrientation(image);
+
+    final tempDir = await getTemporaryDirectory();
+    final newPath =
+        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    final newFile = File(newPath)
+      ..writeAsBytesSync(img.encodeJpg(fixedImage, quality: 95));
+
+    return XFile(newFile.path);
+  }
+
   void _handlePost() async {
 
     setState(() {
       isLoading = true;
     });
-    List<String> imagePaths = _selectedImages.map((file) => file.path).toList();
+    // Normalize all selected images before upload
+    List<XFile> normalizedImages = await Future.wait(
+      _selectedImages.map((file) => normalizeImage(file)),
+    );
+    List<String> imagePaths = normalizedImages.map((file) => file.path).toList();
 
     List<String> imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
     List<String> videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'flv', 'wmv'];
 
-    List<String?> mediaType = _selectedImages.map((file) {
+    List<String?> mediaType = normalizedImages.map((file) {
       String extension = file.path.split('.').last.toLowerCase();
       if (imageExtensions.contains(extension)) {
         return 'IMAGE';
