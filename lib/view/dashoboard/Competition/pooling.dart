@@ -1,5 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+
+import '../../../controller/api/api_controller.dart';
+import 'competiotion.dart';
 
 class PollsScreen extends StatefulWidget {
   @override
@@ -34,11 +40,68 @@ class _PollsScreenState extends State<PollsScreen> {
     // ),
     // Add more sample polls
   ];
+  bool _isLoading = false;
+  String _searchQuery = '';
+  List<Map<String, dynamic>> _searchResults = [];
+
+  Future<void> _search() async {
+    setState(() {
+      _isLoading = true;
+      _searchResults = [];
+    });
+
+    try {
+      final response = await API_V1_call(
+        url: "/api/competition/search?limit=100",
+        method: "POST",
+        body: {
+          "status":"",
+          "searchKeyword":"",
+          "isIncludeExpired":true
+        }
+      );
+
+      print("POOL RESPONSE: ${jsonDecode(response.body)['data']['competitions']}");
+
+      if (response.statusCode == 200) {
+        final data = (jsonDecode(response.body)['data']['competitions'] as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        setState(() {
+          _searchResults = data.reversed.toList();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching search results')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Network error')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'N/A';
+    final dateTime = DateTime.tryParse(dateString);
+    if (dateTime == null) return dateString; // Return original string if parsing fails
+    return DateFormat('yyyy-MM-dd').format(dateTime);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _search();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('Votes', style: TextStyle(color: Colors.black),),
         backgroundColor: Colors.white,
@@ -46,10 +109,52 @@ class _PollsScreenState extends State<PollsScreen> {
         //   IconButton(icon: Icon(Icons.add,color: Colors.black,), onPressed: _createNewPoll),
         // ],
       ),
-      body: PageView.builder(
-        scrollDirection: Axis.vertical,
-        itemCount: _polls.length,
-        itemBuilder: (context, index) => _buildPollItem(_polls[index]),
+      // body: PageView.builder(
+      //   scrollDirection: Axis.vertical,
+      //   itemCount: _polls.length,
+      //   itemBuilder: (context, index) => _buildPollItem(_polls[index]),
+      // ),
+      body: Container(
+        child: ListView.builder(
+          itemCount: _searchResults.length,
+            itemBuilder: (context, index) {
+              print("LIST OF ITEM ${index}: ${_searchResults[index]}");
+              return Container(
+                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Color(0xFFF0F0F0), // A light grey color
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListTile(
+
+                title: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(_searchResults[index]['name'] ?? 'No Title', style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
+                    Text("Competitors ${(_searchResults[index]['options'] as List?)?.length ?? 0}", style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Starting Date: ${_formatDate(_searchResults[index]['startDate'])}',style: TextStyle(color: Colors.black)),
+                    Text('End Date: ${_formatDate(_searchResults[index]['endDate'])}',style: TextStyle(color: Colors.black))
+                  ],
+                ),
+                onTap: () {
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CompetitionOption(data: _searchResults[index]),
+                    ),
+                  );
+                },
+              )
+              );
+            },
+        ),
       ),
     );
   }
@@ -86,7 +191,7 @@ class _PollsScreenState extends State<PollsScreen> {
           child: Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.black54,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(

@@ -4,7 +4,7 @@ import '../controller/auth_controller.dart';
 import '../controller/config/image_path_setter.dart';
 import 'dashoboard/friends/friends.dart';
 import 'dashoboard/home_feed.dart';
-import 'dashoboard/pooling.dart';
+import 'dashoboard/Competition/pooling.dart';
 import 'dashoboard/profile/profile.dart';
 import 'dashoboard/profile/user_menu.dart';
 import 'dashoboard/video/video_feed.dart';
